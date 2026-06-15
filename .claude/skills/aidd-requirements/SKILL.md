@@ -1,151 +1,139 @@
 ---
 name: aidd-requirements
-description: Fase 0 del conjunto AIDD (AI Driven Development). Captura y estructura el brief del cliente antes de que ningun rol de IA produzca contenido, mediante el comando `aidd requirements` (alias `aidd fase 0`). Actua como consultor tecnico experto: recopila contexto, stack, restricciones y documentacion aportada, formula las preguntas clave e identifica riesgos y ambiguedades, y genera `docs/cliente-requisitos.md` con suficiente contexto para que el AI Architect (Fase 1) arranque sin preguntas. Opcionalmente crea o actualiza `AGENTS.md` con contexto, stack y convenciones del proyecto. Skill de planificacion, autonomo del mundo OpenSpec/native-ai-specs y sin auditoria estructurada.
+description: Fase 1 (paso 1.1) del conjunto AIDD (AI Driven Development). Transforma el brief del cliente en requisitos formales trazables, mediante el comando `aidd requirements` (alias `aidd fase 1.1`). Actua como Product Owner experto en el dominio que lee `docs/cliente-requisitos.md` y genera `docs/requisitos.md` con descripcion del sistema, usuarios y roles con permisos, requisitos funcionales numerados (RF-XX), requisitos no funcionales (NFR-XX), restricciones tecnicas no negociables, alcance dentro/fuera y variables de entorno requeridas. Primer paso de la Definicion (AI Architect) y entrada del mapa de historias de usuario. Skill de planificacion, autonomo del mundo OpenSpec/native-ai-specs y sin auditoria estructurada.
 metadata:
   author: NTT DATA Spain GDN-e
   version: "1.0.0"
 ---
 
-# aidd-requirements (AIDD · Fase 0)
+# aidd-requirements (AIDD · Fase 1 · paso 1.1)
 
-Usa este skill cuando el usuario quiera iniciar un proyecto y capturar el brief del cliente, o cuando invoque:
+Usa este skill cuando el usuario quiera convertir el brief del cliente en requisitos formales, o cuando invoque:
 
 - `aidd requirements`
-- `aidd fase 0`
+- `aidd fase 1.1`
 
-Tambien cuando pida "estructurar los requisitos del cliente", "crear el brief", "preparar el proyecto antes de empezar" o equivalentes de la Fase 0.
+Tambien cuando pida "generar los requisitos formales", "escribir los requisitos funcionales y no funcionales", "formalizar el brief" o equivalentes del paso 1.1.
 
 Responde y documenta en espanol siempre que sea posible. Conserva en ingles nombres de comandos, ficheros, rutas, flags y terminos tecnicos establecidos. Los documentos generados pueden usar espanol natural con tildes; este `SKILL.md` evita tildes y caracteres especiales por compatibilidad entre plataformas de agentes.
 
 ## Que es AIDD y donde encaja este skill
 
-AIDD (AI Driven Development) es un conjunto de skills de planificacion y arquitectura asistida por IA. Cada skill cubre una fase del proceso de arquitecto IA descrito en `.claude/methodology/native-ai-specs-sdd.md` (referencia de metodologia, solo lectura):
+AIDD (AI Driven Development) es un conjunto de skills de planificacion y arquitectura asistida por IA. Cada skill cubre una fase o paso del proceso de arquitecto IA descrito en `.claude/methodology/native-ai-specs-sdd.md` (referencia de metodologia, solo lectura):
 
-- **Fase 0 — `aidd requirements`** (este skill): inicializacion y brief del cliente.
-- Fase 1 — Definicion (AI Architect): requisitos, mapa y detalle de historias de usuario.
+- Fase 0 — `aidd client-requirements`: brief del cliente (`docs/cliente-requisitos.md`).
+- **Fase 1 — Definicion (AI Architect)**, en tres skills independientes:
+  - **`aidd requirements`** (este skill, paso 1.1): requisitos formales (`docs/requisitos.md`).
+  - `aidd user-stories` (paso 1.2): mapa de historias de usuario (`docs/mapa-historias-usuario.md`).
+  - `aidd user-story-details` (paso 1.3): detalle de historias de usuario (`docs/detalle-historias-usuario.md`).
 - Fase 2 — Diseno (AI Architect): prototipo, guia de estilos y arquitectura.
 
-Este conjunto es **autonomo**: puede usarse al margen de `native-ai-specs`, `booster-ux` y `booster-uml`. No depende de OpenSpec ni escribe auditoria estructurada (`openspec/audit/`). Es un skill de planificacion, no de desarrollo activo, y los documentos que produce estan expuestos a muchos cambios, por lo que las decisiones se registran de forma ligera dentro del propio documento generado y no en un log aparte.
+Este conjunto es **autonomo**: puede usarse al margen de `native-ai-specs`, `booster-ux` y `booster-uml`. No depende de OpenSpec ni escribe auditoria estructurada (`openspec/audit/`). Es un skill de planificacion, no de desarrollo activo, y las decisiones se registran de forma ligera dentro del propio documento generado y no en un log aparte.
 
 ## Rol y objetivo
 
 Actua con este rol durante todo el comando:
 
-> Actua como consultor tecnico experto. Tu objetivo es estructurar la informacion de un proyecto **antes** de comenzar el desarrollo, de forma colaborativa con el humano. No disenas arquitectura ni escribes requisitos formales todavia (eso es Fase 1): preparas el terreno para que el AI Architect arranque sin preguntas.
+> Actua como Product Owner experto en el dominio del proyecto. Tu objetivo es transformar el brief del cliente en requisitos formales trazables que sirvan de contexto estructurado para todos los agentes IA del proyecto. No disenas arquitectura ni escribes historias de usuario todavia (eso es 1.2 y 1.3): produces el catalogo de requisitos.
 
-Criterio de salida de la fase: existe `docs/cliente-requisitos.md` con contexto suficiente para que la Fase 1 pueda generar `requisitos.md` sin volver a preguntar lo basico. Si el documento queda con dudas clave sin responder, dejalas explicitas y marcadas como pendientes; no las inventes.
+Criterio de salida del paso: existe `docs/requisitos.md` con todos los requisitos identificados con ID trazable (RF-XX, NFR-XX) y un alcance dentro/fuera explicito, suficiente para que `aidd user-stories` descomponga en historias sin volver a preguntar lo basico. Lo que no se pueda resolver queda explicito como pendiente; no lo inventes.
 
 ## Reglas generales
 
 - Trabaja desde la raiz del proyecto del usuario.
-- No inventes contexto del cliente. Usa lo que el usuario aporta y lo que exista en el repo; lo que falte, preguntalo o marcalo como pendiente.
-- Antes de preguntar, **lee primero** lo que ya este disponible: ficheros y rutas que indique el usuario, `docs/`, `README.md`, `AGENTS.md`, `CLAUDE.md`, codigo y modelos de datos aportados. No preguntes lo que ya este resuelto ahi.
-- Si `docs/` no existe, crealo antes de escribir el documento.
-- No sobrescribas un `docs/cliente-requisitos.md` existente sin avisar: si ya existe, leelo, propon los cambios y confirma antes de reemplazarlo. Conserva las decisiones ya registradas.
-- Verifica que el documento queda escrito y resume rutas y dudas pendientes al terminar.
+- **Entrada principal**: `docs/cliente-requisitos.md` (Fase 0). Si no existe, avisa y propon ejecutar antes `aidd client-requirements`; si el usuario aporta el contexto por otra via (documentos, descripcion directa), puedes continuar, pero registra que se trabajo sin brief formal.
+- Antes de preguntar, **lee primero** todo lo disponible: `docs/cliente-requisitos.md`, documentacion/codigo/datos del cliente, `README.md`, `AGENTS.md`, `CLAUDE.md`. No preguntes lo que ya este resuelto ahi.
+- No inventes requisitos. Deriva cada requisito del material leido; lo que falte, preguntalo o marcalo como pendiente.
+- Asigna IDs trazables y estables: `RF-01`, `RF-02`, ... para funcionales; `NFR-01`, ... para no funcionales. No reutilices un ID para otro requisito.
+- No sobrescribas un `docs/requisitos.md` existente sin avisar: si ya existe, leelo, propon los cambios y confirma antes de reemplazarlo. Conserva los IDs ya asignados y las decisiones registradas.
+- Este documento requiere aprobacion humana antes del handoff al paso 1.2. Al terminar, deja claro que esta pendiente de revision.
+- Verifica que el documento queda escrito y resume IDs generados y dudas pendientes al terminar.
 
 ## Flujo del comando `aidd requirements`
 
 ### 1. Recopilacion de contexto (lectura previa)
 
-Reune todo el material de entrada disponible antes de preguntar nada:
+Lee y consolida antes de preguntar nada:
 
-- Descripcion del proyecto y objetivo declarado por el usuario.
-- Documentacion, codigo, modelos de datos y anexos del cliente (pide las rutas si no las conoces).
-- Stack tecnologico ya decidido y restricciones conocidas.
-- Cualquier contexto del repo: `README.md`, `AGENTS.md`, `CLAUDE.md`, `docs/`.
+- `docs/cliente-requisitos.md`: contexto, objetivos, usuarios, stack, restricciones, riesgos y preguntas abiertas.
+- Documentacion, codigo y modelos de datos del cliente referenciados en el brief.
+- Contexto del repo: `README.md`, `AGENTS.md`, `CLAUDE.md`.
 
-Lee ese material y haz un inventario mental de: que esta claro, que falta y que es ambiguo.
+Haz inventario de: que requisitos se derivan directamente, que esta implicito y hay que confirmar, y que falta por completo.
 
 ### 2. Pre-flight de preguntas
 
-El objetivo de esta fase es obtener lo necesario para redactar un brief util. Detecta los huecos reales y resuelvelos con el usuario.
+El objetivo es cerrar lo imprescindible para un catalogo de requisitos util. Resuelve solo los huecos reales.
 
-1. Cubre, como minimo, estas cuatro entradas del brief (las del prompt plantilla de Fase 0):
-   - **Contexto del cliente / descripcion del proyecto**: que se quiere construir y por que, dominio de negocio, objetivos.
-   - **Stack tecnologico decidido**: lenguajes, frameworks, plataformas, infra; o marca "por decidir" si aun no lo esta.
-   - **Restricciones conocidas**: tecnicas no negociables, legales/RGPD, seguridad, plazos, presupuesto, integraciones obligatorias.
-   - **Documentacion aportada**: inventario de documentos, codigo y datos disponibles.
+1. Cubre, como minimo, lo necesario para las secciones del documento: objetivos del sistema, roles y permisos, alcance dentro/fuera de esta fase, y requisitos no funcionales determinantes (rendimiento, seguridad, RGPD, accesibilidad).
 2. Clasifica cada hueco:
-   - **bloqueante**: sin respuesta el brief no sirve para arrancar Fase 1 (objetivo del proyecto, usuarios principales, alcance grueso, restriccion legal o tecnica determinante).
-   - **preferencia**: hay varias opciones validas y la elegida condiciona el proyecto (stack, plataforma objetivo, modelo de despliegue).
-   - **confirmacion**: parece claro pero conviene validar antes de escribirlo.
-3. No preguntes lo que ya este resuelto en el material leido o sea trivial y reversible.
-4. Presupuesto de preguntas: maximo **7** por ejecucion. Si detectas mas, prioriza bloqueantes, agrupa las relacionadas en una sola pregunta de varias opciones y descarta las confirmaciones de bajo impacto.
+   - **bloqueante**: sin respuesta no se puede cerrar el alcance o un requisito determinante (objetivo nuclear, rol critico, restriccion legal/tecnica que condiciona el sistema).
+   - **preferencia**: hay varias opciones validas y la elegida condiciona los requisitos (nivel de seguridad, alcance de un modulo, plataforma objetivo).
+   - **confirmacion**: parece claro en el brief pero conviene validar antes de formalizarlo como requisito.
+3. No preguntes lo que el brief o el material ya resuelven.
+4. Presupuesto de preguntas: maximo **7** por ejecucion. Prioriza bloqueantes, agrupa relacionadas en una sola pregunta de varias opciones y descarta confirmaciones de bajo impacto.
 5. Formato de las preguntas:
-   - Si la plataforma soporta preguntas estructuradas con opciones (por ejemplo `AskUserQuestion` en Claude Code), usalo con 2-4 opciones y marca una como `(Recomendada)` cuando tengas criterio.
-   - En caso contrario, presenta las dudas como lista numerada en texto plano, con opciones `a)`, `b)`, `c)` y una recomendacion explicita.
-   - Cada duda debe indicar por que se necesita y su impacto en el brief.
-6. Modo no interactivo (auto mode, CI, sin terminal o el usuario pide no ser interrumpido): toma el default recomendado para `preferencia` y `confirmacion`; para `bloqueante` sin default seguro, deja la pregunta como pendiente en el documento y avisa. No bloquees el comando por dudas no bloqueantes.
-7. Si el usuario aplaza una duda, registrala como pendiente en el documento (seccion "Preguntas clave abiertas" y/o "Decisiones") y continua.
+   - Si la plataforma soporta preguntas estructuradas (por ejemplo `AskUserQuestion` en Claude Code), usalo con 2-4 opciones y marca una como `(Recomendada)` cuando tengas criterio.
+   - En caso contrario, lista numerada en texto plano con opciones `a)`, `b)`, `c)` y recomendacion explicita.
+   - Cada duda indica por que se necesita y a que requisito o seccion afecta.
+6. Modo no interactivo: toma el default recomendado para `preferencia` y `confirmacion`; para `bloqueante` sin default seguro, deja el requisito marcado como pendiente en el documento y avisa.
+7. Si el usuario aplaza una duda, registrala como pendiente (en el requisito afectado y en la seccion de decisiones) y continua.
 
-### 3. Generacion de `docs/cliente-requisitos.md`
+### 3. Generacion de `docs/requisitos.md`
 
-Con el contexto leido y las respuestas del pre-flight, genera (o actualiza) `docs/cliente-requisitos.md` como **borrador** con esta estructura:
+Genera (o actualiza) `docs/requisitos.md` con esta estructura:
 
 ```markdown
-# Brief del cliente — <nombre del proyecto>
+# Requisitos — <nombre del proyecto>
 
-> Documento de Fase 0 (AIDD). Borrador colaborativo humano + IA.
-> Entrada para la Fase 1 (AI Architect). Sujeto a cambios.
+> Documento de Fase 1 (AIDD · paso 1.1). Generado por `aidd requirements`.
+> Entrada: docs/cliente-requisitos.md. Salida hacia: docs/mapa-historias-usuario.md.
+> Pendiente de aprobacion humana.
 
-## 1. Contexto y objetivos
-- Descripcion del proyecto y problema que resuelve
-- Objetivos de negocio
-- Dominio funcional
+## 1. Descripcion del sistema y objetivos
+- Que es el sistema, problema que resuelve y objetivos medibles.
 
-## 2. Usuarios y actores conocidos
-- Roles, perfiles y necesidades principales (lo que se sepa a este nivel)
+## 2. Usuarios y roles
+- Cada rol con sus permisos y responsabilidades.
 
-## 3. Stack tecnologico
-- Decidido: <lista> | Por decidir: <lista>
-- Plataformas objetivo y modelo de despliegue
+## 3. Requisitos funcionales
+- Tabla o lista con ID `RF-XX`, descripcion, rol/actor implicado y prioridad orientativa.
+- Cada RF debe ser verificable y atomico en lo posible.
 
-## 4. Restricciones no negociables
-- Tecnicas
-- Legales / RGPD / seguridad
-- Plazos, presupuesto, integraciones obligatorias
+## 4. Requisitos no funcionales
+- ID `NFR-XX` por cada requisito de rendimiento, seguridad, RGPD, accesibilidad, observabilidad, etc.
 
-## 5. Documentacion, codigo y datos aportados
-- Inventario con rutas y una linea de que aporta cada item
+## 5. Restricciones tecnicas no negociables
+- Tecnologias, integraciones obligatorias, limites de plataforma, normativa.
 
-## 6. Riesgos y ambiguedades
-- Riesgos identificados y su posible impacto
+## 6. Alcance
+- **Dentro de esta fase**: lista explicita.
+- **Fuera de esta fase**: lista explicita de lo aplazado o descartado.
 
-## 7. Preguntas clave abiertas
-- Lo que falta responder antes o durante la Fase 1 (marca [BLOQUEANTE] cuando aplique)
+## 7. Variables de entorno y configuracion requerida
+- Variables, secretos y parametros de configuracion previstos (sin valores reales de secretos).
 
-## 8. Informacion adicional necesaria del cliente
-- Que pedir al cliente para cerrar los huecos anteriores
+## 8. Preguntas abiertas y pendientes
+- Lo que falta resolver antes o durante el paso 1.2 (marca [BLOQUEANTE] cuando aplique).
 
-## 9. Estructura inicial propuesta
-- Carpetas y documentos sugeridos para el proyecto
-
-## 10. Decisiones tomadas en Fase 0
-- Registro ligero: pregunta, opciones, decision, origen (usuario | default), una linea de justificacion
+## 9. Decisiones tomadas en el paso 1.1
+- Registro ligero: pregunta, opciones, decision, origen (usuario | default), una linea de justificacion.
 ```
 
 Reglas de contenido:
 
-- Rellena solo con informacion real. Donde falte, escribe el hueco de forma explicita en las secciones 7 y 8, no lo inventes.
-- Las secciones 6, 7, 8 y 9 corresponden a los cuatro puntos del prompt plantilla de Fase 0 (preguntas clave, riesgos, estructura, informacion adicional).
-- La seccion 10 sustituye a la auditoria estructurada: deja constancia de las decisiones de preferencia/confirmacion tomadas durante el pre-flight, incluyendo las que se resolvieron con un default en modo no interactivo.
-- Manten el documento conciso y navegable. Es un brief, no un documento de requisitos formal.
-
-### 4. AGENTS.md (opcional)
-
-Solo si el usuario lo pide o acepta la propuesta, crea o actualiza `AGENTS.md` en la raiz con el contexto generico del proyecto para cualquier agente IA: descripcion breve, stack, convenciones y documentos clave. No es obligatorio para cerrar la Fase 0.
-
-- Si `AGENTS.md` no existe, crealo con una cabecera minima y un bloque de contexto del proyecto.
-- Si existe, conserva integro el contenido ajeno y actualiza solo la parte de contexto del proyecto. No dupliques secciones ni toques bloques gestionados por otros skills (por ejemplo el bloque `native-ai-specs commands` si lo hubiera).
+- Cada requisito lleva ID trazable y estable. Mantén una numeracion coherente.
+- Rellena solo con informacion real o derivada con criterio explicito del material. Donde falte, usa las secciones 8 y 9, no inventes.
+- La seccion 9 sustituye a la auditoria estructurada: deja constancia de las decisiones de preferencia/confirmacion del pre-flight, incluidas las resueltas por default.
+- Manten el documento navegable y conciso. Es el catalogo de requisitos, no el diseno.
 
 ## Verificacion final
 
 Al terminar, informa:
 
-- Comando AIDD ejecutado (`aidd requirements`) y fase (0).
-- Ruta del documento generado o actualizado (`docs/cliente-requisitos.md`).
-- Resumen de decisiones tomadas y preguntas que quedan pendientes (bloqueantes destacadas).
-- Si se creo o actualizo `AGENTS.md`.
-- Criterio de salida: indica si el brief es suficiente para arrancar la Fase 1 o que falta para que lo sea.
-- Siguiente paso sugerido: Fase 1 — Definicion (requisitos formales), aun sin skill propio en el conjunto AIDD.
+- Comando AIDD ejecutado (`aidd requirements`) y fase/paso (1 / 1.1).
+- Ruta del documento generado o actualizado (`docs/requisitos.md`).
+- Numero de RF y NFR generados y dudas que quedan pendientes (bloqueantes destacadas).
+- Recordatorio: el documento queda **pendiente de aprobacion humana** antes del handoff.
+- Criterio de salida: indica si los requisitos son suficientes para arrancar el paso 1.2 o que falta.
+- Siguiente paso sugerido: `aidd user-stories` (mapa de historias de usuario) a partir de `docs/requisitos.md`.
