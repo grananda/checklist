@@ -6,8 +6,8 @@ Repositorio piloto para construir y validar el conjunto de skills **AIDD (AI Dri
 
 La metodología NO se carga automáticamente. Léela bajo demanda cuando trabajes el proceso de arquitecto IA o un skill AIDD:
 
-- `.claude/methodology/native-ai-specs-sdd.md` — metodología v3 completa (referencia canónica).
-- `.claude/methodology/native-ai-specs-sdd-getting-started.md` — guía de arranque rápido.
+- `.claude/methodology/native-ai-aidd-sdd.md` — metodología AIDD-SDD v4 completa (referencia canónica).
+- `.claude/methodology/native-ai-aidd-sdd-getting-started.md` — guía de arranque rápido.
 
 ## Convención de carpetas
 

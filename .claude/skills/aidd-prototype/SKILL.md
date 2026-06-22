@@ -21,7 +21,7 @@ Responde en espanol siempre que sea posible. Conserva en ingles nombres de coman
 
 AIDD es un conjunto de skills de **planificacion**, no de desarrollo activo. La implementacion del prototipo es la unica parte de Fase 2 que produce codigo, asi que este skill **no escribe codigo por si mismo**: orquesta el paso y **redirige a `booster-ux`**, el skill de prototipado UX. Asi AIDD mantiene su rol de planificacion y reutiliza el booster especializado en pantallas.
 
-Encaje en el conjunto (proceso descrito en `.claude/methodology/native-ai-specs-sdd.md`, solo lectura):
+Encaje en el conjunto (proceso descrito en `.claude/methodology/native-ai-aidd-sdd.md`, solo lectura):
 
 - Fase 0 — `aidd client-requirements`.
 - Fase 1 — `aidd requirements`, `aidd user-stories`, `aidd user-story-details`.

@@ -1,7 +1,14 @@
-# AI-Native Development — Metodología para Proyectos Full Stack (con `native-ai-specs`)
-**Versión:** 3.0
-**Fecha:** 2026-06-03
-**Base de tooling:** skill `native-ai-specs` (OpenSpec + `booster-ux` + `booster-uml`)
+# Native AI · AIDD-SDD — Metodología AI-Native (AI Driven Development + Spec-Driven Development)
+**Versión:** 4.0
+**Fecha:** 2026-06-22
+**Base de tooling:** skills **AIDD** (`aidd-*` — planificación, diseño y entrega) + skill **native-ai-specs** (OpenSpec + `booster-ux` + `booster-uml` — ejecución).
+
+> **Terminología (importante).** Tres conceptos que conviven y NO son lo mismo:
+> - **SDD** (*Spec-Driven Development*) — la **metodología**: proceso, roles y fases. El "cómo se trabaja" (este documento).
+> - **AIDD** (*AI Driven Development*) — el **skill set** que automatiza la **planificación, el diseño y la entrega** (Fases 0-2 y 3.5). Comandos `aidd *`. Cada comando aplica el prompt del paso; ejecutarlo equivale a lanzar ese prompt a mano.
+> - **native-ai-specs** — el **skill set** de **ejecución** sobre OpenSpec (Fases 3 y 4+). Comandos `native-ai *`.
+>
+> **Novedad v4.** (1) Las Fases 0-2, antes descritas como prompts manuales del AI Architect, ahora se ejecutan con los comandos `aidd` (mismo proceso, empaquetado en skills). (2) Se añade un quinto rol, **AI Delivery Manager**, y la **Fase 3.5**, que traduce el roadmap en un **plan de recursos** (`aidd project-plan` → `docs/planificacion-proyecto.md`) y un **plan de sprints** (`aidd sprint-planning` → `docs/sprint-plan.md`), consumible por un equipo Scrum. Ver Fase 3.5 y registro #008.
 
 ---
 
@@ -73,11 +80,14 @@ CLIENT INPUT
       │
       ▼
 DEFINITION PHASE
-  AI Architect
-  → Prototipo (booster-ux / demo para validar con cliente)
-  → Documentación de definición (requisitos, historias, arquitectura)
+  AI Architect  (comandos `aidd`)
+  → Definición y diseño: aidd requirements → user-stories → user-story-details
+    → prototype-architecture → prototype (booster-ux) → style-guide
+    → architecture-proposal → architecture
   AI Lead
   → native-ai init  +  native-ai roadmap
+  AI Delivery Manager
+  → aidd project-plan + aidd sprint-planning  (plan de recursos + plan de sprints)
       │
       ▼  (aprobación humana)
 EXECUTION PHASE  ◄─────────────────────────────── KO ─┐
@@ -101,7 +111,7 @@ VALIDATION PHASE ─────────────────────
 
 ## 3. Roles y responsabilidades
 
-La metodología define cuatro roles con responsabilidades diferenciadas. Cada uno opera con contexto acotado a su fase. La columna de comandos indica qué comandos `native-ai` ejecuta cada rol.
+La metodología define cinco roles con responsabilidades diferenciadas. Cada uno opera con contexto acotado a su fase. La columna de comandos indica qué comandos ejecuta cada rol (`native-ai` para AI Lead/Developer/Outcome Validator; `aidd` para el AI Delivery Manager de la capa de planificación de entrega).
 
 ### AI Architect
 
@@ -165,6 +175,19 @@ Capa de diagnóstico, QA técnico y funcional. Es el único rol que puede escala
 | **Archiva el change validado** | Ejecuta `native-ai close change <slug>` (envuelve `openspec archive`) |
 | **Lanza el siguiente change** | Tras archivar, habilita al **AI Lead** para que abra y valide el siguiente change (`native-ai open change`) y lo entregue al Developer |
 
+### AI Delivery Manager
+
+Rol de planificación de entrega (añadido en v4). Traduce el diseño y el roadmap a un plan ejecutable por un equipo (humano + agentes): **recursos** y **calendario**. **No implementa código ni toma decisiones de arquitectura.** Opera con los skills `aidd` de la capa de planificación, **autónomos de OpenSpec**.
+
+| Responsabilidad | Comandos / Detalle |
+|---|---|
+| **Genera el plan de recursos** | Ejecuta `aidd project-plan` en cuanto el diseño (Fase 2) está aprobado: produce `docs/planificacion-proyecto.md` con perfiles/equipo (mapeados a los roles SDD cuando aplica), software/licencias, infraestructura/entornos, esfuerzo agregado (a partir de S/M/L), dependencias y riesgos de recursos, derivados de `arquitectura-base.md` y las historias |
+| **Distribuye el trabajo en sprints** | Ejecuta `aidd sprint-planning` cuando existe `docs/roadmap.md`: produce `docs/sprint-plan.md` agrupando los changes/fases en sprints con objetivo, capacidad, asignación de perfiles y dependencias respetadas |
+| **Respeta el faseado por contexto** | No parte un change para encajarlo en un sprint; un sprint contiene changes/historias completos. El roadmap (presupuesto de contexto) manda sobre el calendario |
+| **Hace consumible el plan por un equipo Scrum** | Traduce la planificación AI-native a recursos y calendario que un equipo humano gestiona en su día a día |
+
+> Capa **autónoma de OpenSpec**: parte de los documentos (`arquitectura-base.md`, `roadmap.md`, detalle de historias). Si existen changes de OpenSpec, los usa como detalle adicional, pero la unidad de planificación sigue siendo el change/historia del roadmap. En equipos pequeños, el AI Delivery Manager puede ser el mismo humano que actúa de AI Lead.
+
 ---
 
 ## 4. Documentos del proyecto
@@ -182,7 +205,9 @@ docs/
 ├── propuesta-arquitectura-base.md   ← AI Architect / Fase 2
 ├── arquitectura-base.md             ← AI Architect / Fase 2
 ├── roadmap.md                       ← native-ai roadmap (AI Lead) / Fase 3
-└── prompts-roadmap-native-ai.md     ← native-ai roadmap (AI Lead) / Fase 3
+├── prompts-roadmap-native-ai.md     ← native-ai roadmap (AI Lead) / Fase 3
+├── planificacion-proyecto.md        ← AI Delivery Manager / Fase 3.5 (aidd project-plan)
+└── sprint-plan.md                   ← AI Delivery Manager / Fase 3.5 (aidd sprint-planning)
 
 AGENTS.md                            ← native-ai init — registro de comandos del skill
 
@@ -215,28 +240,16 @@ openspec/
 - Crear `AGENTS.md` con contexto, stack y convenciones del proyecto (fichero de contexto genérico para cualquier agente IA)
 - Definir el stack tecnológico y las restricciones no negociables
 - Capturar el brief en `docs/cliente-requisitos.md`
-- Verificar disponibilidad de Node.js/npm y de los skills `native-ai-specs`, `booster-ux` y `booster-uml`
+- Verificar disponibilidad de Node.js/npm y de los skills `aidd-*` (planificación/diseño), `native-ai-specs`, `booster-ux` y `booster-uml`
 
 **Criterio de salida:** Existe `cliente-requisitos.md` con suficiente contexto para que el AI Architect arranque sin preguntas. Los skills auxiliares están instalados o se conoce dónde instalarlos.
 
-**Prompt plantilla:**
-```prompt
-Actúa como consultor técnico experto. Ayúdame a estructurar la información
-de este proyecto antes de comenzar el desarrollo.
-
-Contexto del cliente: [DESCRIPCIÓN DEL PROYECTO]
-Stack tecnológico decidido: [STACK]
-Restricciones conocidas: [RESTRICCIONES]
-Documentación aportada: [LISTAR DOCUMENTOS/CÓDIGO/DATOS]
-
-A partir de esta información:
-1. Formula las preguntas clave que necesitamos responder antes de empezar
-2. Identifica riesgos y ambigüedades a resolver
-3. Propón la estructura inicial de carpetas y documentos
-4. Sugiere qué información adicional necesitamos del cliente
-
-Guarda el resultado como borrador en docs/cliente-requisitos.md
+**Comando AIDD:**
+```text
+aidd client-requirements
 ```
+
+`aidd client-requirements` actúa como consultor técnico experto: recopila contexto, stack, restricciones y documentación aportada, ejecuta un **pre-flight de dudas** (máx. 7) con las preguntas clave, identifica riesgos y ambigüedades, y genera `docs/cliente-requisitos.md` con suficiente contexto para que la Fase 1 arranque sin preguntas. Opcionalmente crea/actualiza `AGENTS.md` con contexto, stack y convenciones del proyecto.
 
 ---
 
@@ -249,66 +262,30 @@ Guarda el resultado como borrador en docs/cliente-requisitos.md
 
 #### Paso 1.1 — Requisitos formales
 
-**Prompt plantilla:**
-```prompt
-Actúa como Product Owner experto en [DOMINIO DEL PROYECTO].
-
-Lee el documento [cliente-requisitos.md](docs/cliente-requisitos.md) y genera
-requisitos formales estructurados que sirvan de base para el desarrollo.
-
-El documento debe incluir:
-- Descripción del sistema y sus objetivos
-- Usuarios y roles con sus permisos
-- Requisitos funcionales numerados y trazables (RF-XX)
-- Requisitos no funcionales: rendimiento, seguridad, RGPD, accesibilidad (NFR-XX)
-- Restricciones técnicas no negociables
-- Alcance explícito: qué está dentro y qué fuera de Fase 1
-- Variables de entorno y configuración requerida
-
-Usa IDs trazables en cada requisito. Guarda en docs/requisitos.md
+**Comando AIDD:**
+```text
+aidd requirements
 ```
+
+`aidd requirements` actúa como Product Owner experto en el dominio: lee `docs/cliente-requisitos.md` y genera `docs/requisitos.md` con descripción del sistema y objetivos, usuarios y roles con permisos, requisitos funcionales trazables (RF-XX), requisitos no funcionales (NFR-XX: rendimiento, seguridad, RGPD, accesibilidad), restricciones técnicas no negociables, alcance dentro/fuera y variables de entorno. Pre-flight de dudas (máx. 7); decisiones registradas en el propio documento.
 
 #### Paso 1.2 — Mapa de historias de usuario
 
-**Prompt plantilla:**
-```prompt
-Actúa como Product Owner experto en [DOMINIO DEL PROYECTO].
-
-Lee [requisitos.md](docs/requisitos.md) y descomponlo en un mapa de historias
-de usuario organizado por actividades (backbone) y fases de desarrollo.
-
-El mapa debe:
-- Definir las personas/roles de usuario
-- Organizar historias en backbone de actividades principales
-- Agrupar por fases (F0: foundation, F1: [módulo], F2: [módulo]...)
-- Para cada historia: ID único, "Como [rol], quiero [acción] para [objetivo]"
-- Criterio de salida por fase
-- Priorización MoSCoW para Fase 1
-- Referencia al RF correspondiente
-
-Guarda en docs/mapa-historias-usuario.md
+**Comando AIDD:**
+```text
+aidd user-stories
 ```
+
+`aidd user-stories` actúa como Product Owner experto: lee `docs/requisitos.md` y genera `docs/mapa-historias-usuario.md` con las personas/roles, un backbone de actividades principales, historias agrupadas por fases (F0 foundation, F1, F2...), cada una con ID único en formato "Como [rol], quiero [acción] para [objetivo]", criterio de salida por fase, priorización MoSCoW para Fase 1 y referencia al RF correspondiente.
 
 #### Paso 1.3 — Detalle de historias de usuario
 
-**Prompt plantilla:**
-```prompt
-Actúa como Product Owner experto y especialista en criterios de aceptación.
-
-Lee:
-- [requisitos.md](docs/requisitos.md)
-- [mapa-historias-usuario.md](docs/mapa-historias-usuario.md)
-
-Para cada historia genera:
-- Descripción completa
-- Prioridad (Alta/Media/Baja) dentro de su fase
-- Estimación orientativa (S ≤ 2 días · M 3-5 días · L 1-2 semanas)
-- Criterios de aceptación verificables (Dado/Cuando/Entonces o lista numerada)
-- Marca con ⚠️ los criterios bloqueantes para el criterio de salida de fase
-- Notas técnicas y dependencias relevantes
-
-Guarda en docs/detalle-historias-usuario.md
+**Comando AIDD:**
+```text
+aidd user-story-details
 ```
+
+`aidd user-story-details` actúa como Product Owner y especialista en criterios de aceptación: lee `docs/requisitos.md` y `docs/mapa-historias-usuario.md` y genera `docs/detalle-historias-usuario.md` con, por cada historia, descripción completa, prioridad dentro de su fase, estimación orientativa (S ≤ 2 días · M 3-5 días · L 1-2 semanas), criterios de aceptación verificables (Dado/Cuando/Entonces), marca de criterios bloqueantes y notas técnicas y dependencias.
 
 **Criterio de salida de Fase 1:** Cada requisito tiene al menos una historia. Cada historia tiene criterios de aceptación verificables. Humano ha aprobado los tres documentos.
 
@@ -325,127 +302,47 @@ Guarda en docs/detalle-historias-usuario.md
 
 El prototipo sirve para validar con el cliente antes de invertir en la arquitectura real. **Todo se mockea.**
 
-**Prompt plantilla:**
-```prompt
-Actúa como Product Owner y arquitecto de software.
-
-Con base en:
-- [mapa-historias-usuario.md](docs/mapa-historias-usuario.md)
-- [detalle-historias-usuario.md](docs/detalle-historias-usuario.md)
-
-Genera una arquitectura base simple para una demo 100% mockeada, orientada
-a validar requisitos con el cliente.
-
-Incluye:
-- Stack mínimo (prioriza velocidad sobre corrección técnica)
-- Componentes y módulos para los flujos principales
-- Pantallas o endpoints mínimos para recorrer casos de uso clave
-- Estrategia de mocks: qué se simula y cómo
-- Datos de ejemplo coherentes con el dominio
-- Supuestos tomados y exclusiones explícitas
-- Pasos mínimos de implementación ordenados
-
-La demo debe poder recorrerse de punta a punta sin bloqueos.
-Guarda en docs/arquitectura-base-prototipo.md
+**Comando AIDD:**
+```text
+aidd prototype-architecture
 ```
+
+`aidd prototype-architecture` actúa como Product Owner y arquitecto de software: lee `docs/mapa-historias-usuario.md` y `docs/detalle-historias-usuario.md` y genera `docs/arquitectura-base-prototipo.md` con stack mínimo (prioriza velocidad), componentes y módulos de los flujos principales, pantallas o endpoints clave, estrategia de mocks (todo se simula), datos de ejemplo del dominio, supuestos y exclusiones, y pasos mínimos de implementación. La demo debe poder recorrerse de punta a punta sin bloqueos.
 
 #### Paso 2.2 — Implementación del prototipo
 
-Para las pantallas del prototipo puedes apoyarte en el skill de prototipado UX:
-
+**Comando AIDD:**
 ```text
-native-ai prototype-ux [pantalla-o-flujo]
+aidd prototype
 ```
 
-`native-ai prototype-ux` lanza `booster-ux` (una vez por pantalla nueva si se indica un change; o directamente con su flujo de preguntas si no). Para flujos no cubiertos por booster-ux, implementa la demo con el prompt siguiente:
-
-**Prompt plantilla:**
-```prompt
-Actúa como experto en desarrollo de software y prototipado de producto.
-
-Implementa la demo funcional descrita en
-[arquitectura-base-prototipo.md](docs/arquitectura-base-prototipo.md).
-
-Toma como base también:
-- [mapa-historias-usuario.md](docs/mapa-historias-usuario.md)
-- [detalle-historias-usuario.md](docs/detalle-historias-usuario.md)
-
-Instrucciones:
-- Implementa solo lo necesario para los flujos principales
-- Mockea TODO lo externo: APIs, BD, auth, notificaciones, integraciones
-- Usa datos de ejemplo coherentes con el dominio
-- Si falta detalle funcional, toma la opción más simple y documéntala
-- La app debe arrancar con un solo comando
-- Incluye README.md mínimo con instrucciones de arranque
-
-Entrega: código funcional + datos mock + README
-```
+`aidd prototype` es un skill-puente: lee `docs/arquitectura-base-prototipo.md`, identifica las pantallas y flujos de la demo y **redirige a `booster-ux`** (una invocación por pantalla), pasándole `docs/guia-estilos.md` como referencia de estilo si existe. **No escribe código por sí mismo.** Si `booster-ux` no está disponible, entrega un prompt de implementación manual de la demo (código funcional + datos mock + README) como alternativa. Mockea TODO lo externo: APIs, BD, auth, notificaciones e integraciones.
 
 > **Punto de validación humana:** El humano presenta el prototipo al cliente, recoge feedback y actualiza `cliente-requisitos.md` antes de continuar. **Si hay cambios significativos, se vuelve al Paso 1.1.**
 
 #### Paso 2.3 — Guía de estilos y propuesta de arquitectura
 
-**Prompt plantilla:**
-```prompt
-Actúa como experto en diseño de producto, sistemas de diseño y arquitectura frontend.
+El paso 2.3 se cubre con **dos skills independientes** (se pueden ejecutar en cualquier orden):
 
-A partir de [detalle-historias-usuario.md](docs/detalle-historias-usuario.md)
-y teniendo en cuenta que la identidad visual es [REFERENCIA VISUAL/MARCA]:
-
-**docs/guia-estilos.md** — incluye:
-- Principios de diseño y UX
-- Paleta de colores con valores hex, tipografía, espaciado, iconografía
-- Design tokens CSS (custom properties concretas)
-- Componentes base y pautas de uso
-- Reglas de responsive y accesibilidad (WCAG 2.1 AA)
-- Estructura de pantallas y criterios de navegación
-
-**docs/propuesta-arquitectura-base.md** — incluye:
-- Stack técnico recomendado con justificación
-- Organización de módulos y capas
-- Gestión de estado y flujo de datos
-- Estrategia de testing
-- Consideraciones de seguridad y escalabilidad
-- Recomendaciones técnicas alineadas con las historias
+```text
+aidd style-guide
+aidd architecture-proposal
 ```
+
+`aidd style-guide` actúa como experto en diseño de producto y sistemas de diseño: lee `docs/detalle-historias-usuario.md` y la referencia visual/marca y genera `docs/guia-estilos.md` con principios de diseño y UX, paleta de colores (hex), tipografía, espaciado, iconografía, design tokens CSS concretos, componentes base y pautas de uso, responsive y accesibilidad WCAG 2.1 AA, y estructura de pantallas y navegación. Opcionalmente extrae la identidad visual de un diseño en Figma.
+
+`aidd architecture-proposal` actúa como experto en arquitectura de software: lee `docs/detalle-historias-usuario.md` y genera `docs/propuesta-arquitectura-base.md` con stack técnico recomendado y justificado, organización de módulos y capas, gestión de estado y flujo de datos, estrategia de testing, y consideraciones de seguridad y escalabilidad alineadas con las historias.
 
 #### Paso 2.4 — Arquitectura técnica definitiva
 
 El AI Architect consolida la arquitectura real del producto una vez validado el prototipo y cerrado el feedback del cliente. **Este documento es el insumo principal de `native-ai roadmap`.**
 
-**Prompt plantilla:**
-```prompt
-Actúa como arquitecto de software senior con enfoque práctico de implementación.
-
-Analiza como fuentes de verdad:
-- [detalle-historias-usuario.md](docs/detalle-historias-usuario.md)
-- [propuesta-arquitectura-base.md](docs/propuesta-arquitectura-base.md)
-- [guia-estilos.md](docs/guia-estilos.md)
-
-Genera el documento técnico definitivo de arquitectura. Debe:
-- Estar alineado con historias, propuesta funcional y guía de estilos
-- Ser implementable, consistente y escalable
-- Evitar contenido genérico — cada decisión debe ser explícita
-- Documentar supuestos cuando falte detalle
-- No contradecir ningún documento de entrada
-
-Incluye obligatoriamente:
-- Objetivo y alcance
-- Principios y decisiones arquitectónicas
-- Estructura de la solución (árbol de carpetas real)
-- Descomposición por módulos/dominios
-- Capas y responsabilidades
-- Componentes base y relaciones
-- Flujos principales de información
-- Estrategia de gestión de estado
-- Navegación y organización de pantallas/endpoints
-- Integración con APIs y servicios externos
-- Seguridad, accesibilidad, observabilidad y rendimiento
-- Escalabilidad, mantenibilidad y extensibilidad
-- Riesgos técnicos, supuestos y decisiones pendientes
-
-Guarda en docs/arquitectura-base.md
+**Comando AIDD:**
+```text
+aidd architecture
 ```
+
+`aidd architecture` actúa como arquitecto de software senior con enfoque de implementación: analiza como fuentes de verdad `docs/detalle-historias-usuario.md`, `docs/propuesta-arquitectura-base.md` y `docs/guia-estilos.md` (señalando y resolviendo cualquier conflicto entre ellas) y genera `docs/arquitectura-base.md` —implementable, sin contradicciones, con cada decisión explícita— con: objetivo y alcance; principios y decisiones arquitectónicas; estructura de la solución (árbol de carpetas real); descomposición por módulos/dominios; capas y responsabilidades; componentes base y relaciones; flujos de información; gestión de estado; navegación y endpoints; integraciones; seguridad, accesibilidad, observabilidad y rendimiento; escalabilidad, mantenibilidad y extensibilidad; y riesgos, supuestos y decisiones pendientes. Es el **insumo principal de `native-ai roadmap`**.
 
 **Criterio de salida de Fase 2:** Prototipo validado por el cliente. Guía de estilos, propuesta de arquitectura y arquitectura técnica definitiva aprobadas. Requisitos y arquitectura en estado consumible por `native-ai roadmap`.
 
@@ -551,6 +448,29 @@ Un **change** es la unidad de trabajo: equivale a una fase del roadmap o feature
 > A partir de aquí, el AI Lead repite el `open change` + validación para **cada** change del roadmap, normalmente cuando el Outcome Validator archiva el anterior y lanza el siguiente.
 
 **Criterio de salida de Fase 3:** Roadmap aprobado. OpenSpec inicializado y configurado. `AGENTS.md` registrado. Change `foundation` abierto, implementado y archivado. Primer change funcional abierto, validado y entregado a los AI Developers.
+
+---
+
+### Fase 3.5 — Planificación de entrega (AI Delivery Manager) · DEFINITION → EXECUTION
+
+**Propósito:** Traducir el diseño aprobado y el roadmap consciente de contexto en un plan ejecutable por un equipo (humano + agentes): qué **recursos** hacen falta y en qué **orden temporal** se aborda el trabajo. Cubre la dimensión de gestión de proyecto/recursos que el SDD v3 no contemplaba. Es **opcional** pero recomendada cuando el desarrollo lo ejecuta un equipo humano que necesita planificar recursos y sprints (p. ej. un equipo Scrum).
+
+**Entradas:** `arquitectura-base.md`, `mapa-historias-usuario.md`, `detalle-historias-usuario.md` (para recursos); `roadmap.md` + `planificacion-proyecto.md` + `detalle-historias-usuario.md` (para sprints)
+**Salidas:** `docs/planificacion-proyecto.md`, `docs/sprint-plan.md`
+
+> Capa **autónoma de OpenSpec** (skills `aidd-*`). No sustituye al `native-ai roadmap`: lo complementa. El roadmap fasea por presupuesto de contexto del modelo; esta fase añade recursos y calendario humano **sin romper ese faseado** (un sprint no parte un change).
+
+#### Paso 3.5.1 — `aidd project-plan` (plan de recursos)
+
+Puede ejecutarse en cuanto la Fase 2 está aprobada (no requiere el roadmap). El AI Delivery Manager genera `docs/planificacion-proyecto.md` con perfiles/equipo (mapeados a los roles SDD cuando aplica), software/licencias (open source vs coste, órdenes de magnitud), infraestructura/entornos, esfuerzo agregado (a partir de S/M/L), dependencias y riesgos de recursos.
+
+**Criterio:** Plan de recursos aprobado; el equipo sabe qué perfiles, licencias e infraestructura necesita.
+
+#### Paso 3.5.2 — `aidd sprint-planning` (plan de sprints)
+
+Requiere `docs/roadmap.md` (Paso 3.3) y `docs/planificacion-proyecto.md`. El AI Delivery Manager distribuye los changes/fases del roadmap en sprints, respetando dependencias y prerequisitos (F0 → F1 → F2) y la capacidad del equipo, y produce `docs/sprint-plan.md` con objetivo por sprint, unidades de trabajo completas (sin partir changes), asignación de perfiles, hitos y riesgos de planificación.
+
+**Criterio de salida de Fase 3.5:** Plan de recursos y plan de sprints aprobados por el equipo. El trabajo del roadmap queda repartido en iteraciones ejecutables por un equipo humano, con dependencias respetadas. La ejecución (Fase 4) sigue el orden de los sprints: el AI Lead abre cada change con `native-ai open change` según ese orden.
 
 ---
 
@@ -939,6 +859,8 @@ Para equipos que vienen de la metodología v2.0 (OpenSpec a pelo):
 |---|---|
 | `openspec init` | `native-ai init` (+ comprobación de boosters + registro en `AGENTS.md`) |
 | Planificación de sprints (`sprints-desarrollo.md`) | `native-ai roadmap` → `docs/roadmap.md` (faseado por presupuesto de contexto) |
+| — (planificación de recursos no existía) | **`aidd project-plan`** → `docs/planificacion-proyecto.md` (capa Delivery, v4) |
+| Sprints calendarizados para equipo humano | **`aidd sprint-planning`** → `docs/sprint-plan.md` sobre el roadmap (capa Delivery, v4) |
 | Framework de prompting (`prompts_a_ejecutar.md`) | `docs/prompts-roadmap-native-ai.md` (generado por `native-ai roadmap`) |
 | `/opsx:propose [name]` | `native-ai open change <slug>` (**+ pre-flight de dudas** → `decisions.md`) |
 | `/opsx:apply [name]` | `native-ai implement change <slug>` (**+ pre-flight de dudas**) |
@@ -966,3 +888,4 @@ Tabla de cambios aplicados o pendientes de decisión sobre esta metodología. Si
 | 005 | Human-in-the-loop | **Aplicado** | El pre-flight de dudas (máx. 7, persistido en `decisions.md`) hace ejecutable y trazable la validación humana en `open change` e `implement change` | Convierte un principio en un paso operativo del comando. En modo no interactivo aplica defaults recomendados y se detiene ante bloqueantes. |
 | 006 | Trazabilidad | **Aplicado** | Auditoría obligatoria en `openspec/audit/*.jsonl` con hashes de input/output, versión de prompt, modelo y decisiones | Permite auditar el uso del tooling IA (quién, qué, sobre qué, con qué modelo) sin almacenar contenido sensible. |
 | 007 | Roles / Fase 4 | **Aplicado** | El AI Lead ejecuta el `open change` (propose) de **todos** los changes y entrega specs ya validados al Developer; el Developer solo hace `implement change` + verificación + corrección de los bugs que identifique. No abre changes | El Lead actúa como control de calidad de la especificación antes de que el Developer la consuma, reduciendo el riesgo de implementar sobre specs incorrectas. El coste de disponibilidad continua del Lead se asume a cambio de specs validadas; el pre-flight de dudas en `implement change` cubre las dudas residuales del Developer. |
+| 008 | Roles / Fase 3.5 (v4) | **Aplicado** | Se añade el rol **AI Delivery Manager** y la **Fase 3.5 — Planificación de entrega**, con los skills `aidd project-plan` (`docs/planificacion-proyecto.md`) y `aidd sprint-planning` (`docs/sprint-plan.md`) | El SDD v3 faseaba por presupuesto de contexto (roadmap) pero no cubría recursos ni calendario para un equipo humano. Esta capa, autónoma de OpenSpec, traduce el roadmap a recursos y sprints sin romper el faseado por contexto (un sprint no parte un change). Hace la planificación AI-native consumible por un equipo Scrum. |
