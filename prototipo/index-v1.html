@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CheckList</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          // OKLCH, neutros tintados hacia el hue de marca (~255), nunca #000 ni #fff puros
+          canvas:   'oklch(0.985 0.004 255)',  // fondo de pagina, casi blanco tintado
+          surface:  'oklch(0.998 0.002 255)',  // tarjetas, casi blanco
+          ink:      'oklch(0.255 0.012 255)',  // texto principal (no #000)
+          muted:    'oklch(0.520 0.018 255)',  // texto secundario
+          faint:    'oklch(0.640 0.015 255)',  // texto muy atenuado
+          hair:     'oklch(0.910 0.008 255)',  // bordes / divisores
+          accent:   'oklch(0.510 0.150 255)',  // primario azul de marca, con caracter
+          'accent-strong': 'oklch(0.455 0.155 255)', // hover/pressed
+          'accent-soft':   'oklch(0.955 0.030 255)', // wash de acento
+          done:     'oklch(0.560 0.130 150)',  // exito / hecha
+          'done-soft': 'oklch(0.960 0.030 150)',
+          danger:   'oklch(0.530 0.180 27)',   // peligro / borrar
+          'danger-soft': 'oklch(0.962 0.030 27)',
+        },
+        fontFamily: {
+          sans: ['-apple-system','BlinkMacSystemFont','"Segoe UI"','Roboto','"Helvetica Neue"','Arial','sans-serif'],
+        },
+        borderRadius: { sm: '6px', md: '10px', pill: '999px' },
+        boxShadow: {
+          card: '0 1px 2px oklch(0.255 0.012 255 / 0.06)',
+          modal: '0 12px 40px oklch(0.255 0.05 255 / 0.22)',
+          bar: '0 1px 0 oklch(0.910 0.008 255 / 0.9)',
+        },
+        // ratio tipografico ~1.25+
+        fontSize: {
+          xs:   ['0.75rem',  { lineHeight: '1.45' }],
+          sm:   ['0.875rem', { lineHeight: '1.5'  }],
+          base: ['1rem',     { lineHeight: '1.5'  }],
+          lg:   ['1.25rem',  { lineHeight: '1.4'  }],
+          xl:   ['1.6rem',   { lineHeight: '1.25' }],
+        },
+      }
+    }
+  }
+</script>
+<style>
+  html { -webkit-text-size-adjust: 100%; }
+  body { background: oklch(0.985 0.004 255); }
+  /* foco visible y consistente */
+  :focus-visible { outline: 2px solid oklch(0.510 0.150 255); outline-offset: 2px; border-radius: 4px; }
+  .no-ring:focus-visible { outline: none; }
+  /* checkbox tachado animacion sutil */
+  .task-done .task-title { text-decoration: line-through; text-decoration-color: oklch(0.640 0.015 255); color: oklch(0.560 0.018 255); }
+  .task-done .task-desc  { opacity: .55; }
+  /* barra de progreso transicion */
+  #progressFill { transition: width .35s cubic-bezier(.4,0,.2,1); }
+  /* modal anim */
+  dialog[open] { animation: pop .18s ease-out; }
+  @keyframes pop { from { opacity: 0; transform: translateY(6px) scale(.98); } to { opacity:1; transform:none; } }
+  dialog::backdrop { background: oklch(0.255 0.04 255 / 0.42); backdrop-filter: blur(1px); }
+  /* fila aparece */
+  .row-enter { animation: rowin .25s ease-out; }
+  @keyframes rowin { from { opacity:0; transform: translateY(-4px);} to {opacity:1; transform:none;} }
+</style>
+</head>
+<body class="font-sans text-ink antialiased">
+
+<!-- ================= CABECERA + PROGRESO (sticky) ================= -->
+<header class="sticky top-0 z-30 bg-canvas/95 backdrop-blur-sm shadow-bar">
+  <div class="mx-auto max-w-[720px] px-5 pt-5 pb-3">
+    <div class="flex items-baseline justify-between">
+      <h1 class="text-xl font-semibold tracking-tight flex items-center gap-2">
+        <span class="inline-flex h-7 w-7 items-center justify-center rounded-sm bg-accent text-white text-sm shadow-card" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </span>
+        CheckList
+      </h1>
+      <span class="text-xs text-faint hidden sm:block">Checklist de despliegue</span>
+    </div>
+
+    <!-- Indicador de progreso -->
+    <div class="mt-4">
+      <div class="flex items-baseline justify-between mb-1.5">
+        <p class="text-sm text-muted" id="progressText">2 de 6 hechas</p>
+        <p class="text-sm font-semibold tabular-nums" id="progressPct">33%</p>
+      </div>
+      <div class="h-2 w-full rounded-pill bg-hair overflow-hidden"
+           role="progressbar" id="progressBar"
+           aria-valuenow="33" aria-valuemin="0" aria-valuemax="100"
+           aria-label="Progreso del checklist">
+        <div id="progressFill" class="h-full rounded-pill bg-accent" style="width:33%"></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ================= LISTA ================= -->
+<main class="mx-auto max-w-[720px] px-5 pb-32 sm:pb-12 pt-6">
+
+  <ul id="taskList" class="space-y-3"></ul>
+
+  <!-- Estado vacio -->
+  <div id="emptyState" class="hidden text-center py-20">
+    <div class="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-md bg-accent-soft text-accent" aria-hidden="true">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    </div>
+    <h2 class="text-lg font-semibold">Aun no hay tareas</h2>
+    <p class="mt-1.5 text-sm text-muted max-w-xs mx-auto">Empieza tu checklist: anade la primera tarea y ve marcando lo que vais completando.</p>
+    <button type="button" onclick="openAdd()" class="no-ring mt-6 inline-flex items-center gap-2 rounded-md bg-accent px-5 py-2.5 text-sm font-semibold text-white shadow-card hover:bg-accent-strong transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      Anadir la primera tarea
+    </button>
+  </div>
+
+  <!-- Anadir tarea (escritorio: al pie de la lista) -->
+  <div id="addInline" class="hidden sm:block mt-6">
+    <button type="button" onclick="openAdd()" class="no-ring group flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-hair bg-surface/50 px-5 py-3.5 text-sm font-semibold text-muted hover:border-accent hover:text-accent hover:bg-accent-soft/40 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      Anadir tarea
+    </button>
+  </div>
+</main>
+
+<!-- Anadir tarea (movil: sticky abajo) -->
+<div id="addSticky" class="sm:hidden fixed inset-x-0 bottom-0 z-30 border-t border-hair bg-canvas/95 backdrop-blur-sm px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+  <button type="button" onclick="openAdd()" class="no-ring flex w-full items-center justify-center gap-2 rounded-md bg-accent px-5 py-3 text-base font-semibold text-white shadow-card hover:bg-accent-strong active:bg-accent-strong transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+    Anadir tarea
+  </button>
+</div>
+
+<!-- ================= MODAL ALTA / EDICION ================= -->
+<dialog id="taskDialog" class="m-auto w-[calc(100vw-2rem)] max-w-[480px] rounded-md bg-surface p-0 text-ink shadow-modal backdrop:bg-transparent">
+  <form id="taskForm" method="dialog" class="p-6">
+    <h2 id="dialogTitle" class="text-lg font-semibold">Nueva tarea</h2>
+    <p class="mt-1 text-sm text-muted">Da un titulo claro; la descripcion es opcional.</p>
+
+    <div class="mt-5">
+      <label for="fTitle" class="block text-sm font-semibold mb-1.5">Titulo <span class="text-danger" aria-hidden="true">*</span></label>
+      <input id="fTitle" name="title" type="text" maxlength="120" required autocomplete="off"
+        class="w-full rounded-sm border border-hair bg-white px-3 py-2.5 text-base placeholder:text-faint focus:border-accent focus:no-ring focus-visible:outline-2 focus-visible:outline-accent"
+        placeholder="Ej. Desplegar en preproduccion" aria-describedby="titleHint titleError">
+      <div class="mt-1.5 flex items-center justify-between">
+        <p id="titleError" class="text-xs text-danger hidden" role="alert">El titulo es obligatorio.</p>
+        <p id="titleHint" class="text-xs text-faint ml-auto tabular-nums"><span id="titleCount">0</span>/120</p>
+      </div>
+    </div>
+
+    <div class="mt-4">
+      <label for="fDesc" class="block text-sm font-semibold mb-1.5">Descripcion <span class="font-normal text-faint">(opcional)</span></label>
+      <textarea id="fDesc" name="desc" rows="3" maxlength="2000"
+        class="w-full resize-y rounded-sm border border-hair bg-white px-3 py-2.5 text-sm placeholder:text-faint focus:border-accent focus:no-ring focus-visible:outline-2 focus-visible:outline-accent"
+        placeholder="Detalles, contexto o criterios" aria-describedby="descCount"></textarea>
+      <p id="descCount" class="mt-1.5 text-xs text-faint text-right tabular-nums"><span id="descNum">0</span>/2000</p>
+    </div>
+
+    <div class="mt-6 flex flex-col-reverse sm:flex-row sm:justify-end gap-2.5">
+      <button type="button" onclick="closeDialog()" class="no-ring rounded-sm px-4 py-2.5 text-sm font-semibold text-muted hover:bg-hair/50 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Cancelar</button>
+      <button type="submit" id="saveBtn" class="no-ring rounded-sm bg-accent px-5 py-2.5 text-sm font-semibold text-white shadow-card hover:bg-accent-strong transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Guardar tarea</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- ================= MODAL CONFIRMAR BORRADO ================= -->
+<dialog id="deleteDialog" class="m-auto w-[calc(100vw-2rem)] max-w-[420px] rounded-md bg-surface p-0 text-ink shadow-modal backdrop:bg-transparent">
+  <div class="p-6">
+    <div class="flex items-start gap-3.5">
+      <div class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-pill bg-danger-soft text-danger" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+      </div>
+      <div>
+        <h2 class="text-lg font-semibold">Borrar esta tarea</h2>
+        <p class="mt-1 text-sm text-muted">Vas a eliminar <span id="delName" class="font-semibold text-ink"></span>. Esta accion no se puede deshacer.</p>
+      </div>
+    </div>
+    <div class="mt-6 flex flex-col-reverse sm:flex-row sm:justify-end gap-2.5">
+      <button type="button" onclick="closeDelete()" class="no-ring rounded-sm px-4 py-2.5 text-sm font-semibold text-muted hover:bg-hair/50 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Cancelar</button>
+      <button type="button" id="confirmDelBtn" class="no-ring rounded-sm bg-danger px-5 py-2.5 text-sm font-semibold text-white shadow-card hover:brightness-95 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-danger">Borrar tarea</button>
+    </div>
+  </div>
+</dialog>
+
+<script>
+/* ============ Estado ============ */
+let tasks = [
+  { id: 1, title: 'Crear rama de release', desc: 'Desde main, nombrar release/x.y.z', done: true },
+  { id: 2, title: 'Pasar test suite completa', desc: 'Unit + integracion en verde', done: true },
+  { id: 3, title: 'Actualizar changelog', desc: 'Resumen de cambios de la version', done: false },
+  { id: 4, title: 'Desplegar en preproduccion', desc: '', done: false },
+  { id: 5, title: 'Validacion funcional con QA', desc: 'Smoke test de los flujos criticos', done: false },
+  { id: 6, title: 'Desplegar en produccion', desc: 'Ventana acordada con el equipo', done: false },
+];
+let nextId = 7;
+let editingId = null;   // null => alta
+let deletingId = null;
+
+const $ = (s) => document.querySelector(s);
+const list = $('#taskList');
+
+const esc = (s) => s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ============ Render ============ */
+function render(newId) {
+  list.innerHTML = '';
+  const empty = tasks.length === 0;
+  $('#emptyState').classList.toggle('hidden', !empty);
+  $('#addInline').classList.toggle('hidden', empty); // ocultar boton inline en vacio (el vacio ya trae CTA)
+  $('#addSticky').classList.toggle('hidden', false);
+
+  tasks.forEach(t => {
+    const li = document.createElement('li');
+    li.className = 'task-row' + (t.done ? ' task-done' : '') + (t.id === newId ? ' row-enter' : '');
+    li.dataset.id = t.id;
+    // espaciado VARIADO: tareas hechas mas compactas y atenuadas; pendientes con mas aire
+    const pad = t.done ? 'py-3' : 'py-4';
+    li.innerHTML = `
+      <div class="group flex items-start gap-3.5 rounded-md border border-hair bg-surface px-4 ${pad} shadow-card hover:border-accent/40 transition">
+        <button type="button" role="checkbox" aria-checked="${t.done}"
+          onclick="toggle(${t.id})"
+          aria-label="${t.done ? 'Marcar como pendiente' : 'Marcar como hecha'}: ${esc(t.title)}"
+          class="no-ring mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-pill border-2 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent
+            ${t.done ? 'border-done bg-done text-white' : 'border-hair bg-white text-transparent hover:border-accent'}">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </button>
+
+        <div class="min-w-0 flex-1">
+          <p class="task-title text-base font-semibold leading-snug break-words">${esc(t.title)}</p>
+          ${t.desc ? `<p class="task-desc mt-0.5 text-sm text-muted break-words">${esc(t.desc)}</p>` : ''}
+          ${t.done ? `<span class="mt-1.5 inline-flex items-center gap-1 rounded-pill bg-done-soft px-2 py-0.5 text-xs font-semibold text-done">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Hecha</span>` : ''}
+        </div>
+
+        <div class="flex shrink-0 items-center gap-0.5 -mr-1.5">
+          <button type="button" onclick="openEdit(${t.id})" aria-label="Editar: ${esc(t.title)}"
+            class="no-ring flex h-9 w-9 items-center justify-center rounded-sm text-muted hover:bg-accent-soft hover:text-accent transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+          </button>
+          <button type="button" onclick="openDelete(${t.id})" aria-label="Borrar: ${esc(t.title)}"
+            class="no-ring flex h-9 w-9 items-center justify-center rounded-sm text-muted hover:bg-danger-soft hover:text-danger transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-danger">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M10 11v6M14 11v6"/></svg>
+          </button>
+        </div>
+      </div>`;
+    list.appendChild(li);
+  });
+  updateProgress();
+}
+
+/* ============ Progreso ============ */
+function updateProgress() {
+  const total = tasks.length;
+  const done = tasks.filter(t => t.done).length;
+  const pct = total === 0 ? 0 : Math.round((done / total) * 100);
+  $('#progressText').textContent = `${done} de ${total} ${total === 1 ? 'hecha' : 'hechas'}`;
+  $('#progressPct').textContent = `${pct}%`;
+  $('#progressFill').style.width = pct + '%';
+  const bar = $('#progressBar');
+  bar.setAttribute('aria-valuenow', pct);
+  bar.setAttribute('aria-valuetext', `${done} de ${total} tareas, ${pct} por ciento`);
+  // color del fill: verde al 100%
+  $('#progressFill').classList.toggle('bg-done', pct === 100);
+  $('#progressFill').classList.toggle('bg-accent', pct !== 100);
+}
+
+/* ============ Toggle ============ */
+function toggle(id) {
+  const t = tasks.find(x => x.id === id);
+  if (t) { t.done = !t.done; render(); }
+}
+
+/* ============ Alta / Edicion ============ */
+function openAdd() {
+  editingId = null;
+  $('#dialogTitle').textContent = 'Nueva tarea';
+  $('#saveBtn').textContent = 'Guardar tarea';
+  $('#fTitle').value = '';
+  $('#fDesc').value = '';
+  syncCounts();
+  hideTitleError();
+  $('#taskDialog').showModal();
+  setTimeout(() => $('#fTitle').focus(), 30);
+}
+function openEdit(id) {
+  const t = tasks.find(x => x.id === id);
+  if (!t) return;
+  editingId = id;
+  $('#dialogTitle').textContent = 'Editar tarea';
+  $('#saveBtn').textContent = 'Guardar cambios';
+  $('#fTitle').value = t.title;
+  $('#fDesc').value = t.desc;
+  syncCounts();
+  hideTitleError();
+  $('#taskDialog').showModal();
+  setTimeout(() => $('#fTitle').focus(), 30);
+}
+function closeDialog() { $('#taskDialog').close(); }
+
+$('#taskForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const title = $('#fTitle').value.trim();
+  const desc = $('#fDesc').value.trim();
+  if (!title) { showTitleError(); return; }
+  if (editingId === null) {
+    tasks.push({ id: nextId, title, desc, done: false });
+    render(nextId);
+    nextId++;
+  } else {
+    const t = tasks.find(x => x.id === editingId);
+    if (t) { t.title = title; t.desc = desc; }
+    render();
+  }
+  $('#taskDialog').close();
+});
+
+function showTitleError() {
+  $('#titleError').classList.remove('hidden');
+  $('#fTitle').classList.add('border-danger');
+  $('#fTitle').focus();
+}
+function hideTitleError() {
+  $('#titleError').classList.add('hidden');
+  $('#fTitle').classList.remove('border-danger');
+}
+
+/* contadores */
+function syncCounts() {
+  $('#titleCount').textContent = $('#fTitle').value.length;
+  $('#descNum').textContent = $('#fDesc').value.length;
+}
+$('#fTitle').addEventListener('input', () => { syncCounts(); if ($('#fTitle').value.trim()) hideTitleError(); });
+$('#fDesc').addEventListener('input', syncCounts);
+
+/* ============ Borrado ============ */
+function openDelete(id) {
+  const t = tasks.find(x => x.id === id);
+  if (!t) return;
+  deletingId = id;
+  $('#delName').textContent = '"' + t.title + '"';
+  $('#deleteDialog').showModal();
+  setTimeout(() => $('#confirmDelBtn').focus(), 30);
+}
+function closeDelete() { $('#deleteDialog').close(); deletingId = null; }
+$('#confirmDelBtn').addEventListener('click', () => {
+  if (deletingId !== null) {
+    tasks = tasks.filter(t => t.id !== deletingId);
+    render();
+  }
+  $('#deleteDialog').close();
+  deletingId = null;
+});
+
+/* cerrar al pulsar fuera (click en backdrop) */
+[ '#taskDialog', '#deleteDialog' ].forEach(sel => {
+  const d = $(sel);
+  d.addEventListener('click', (e) => { if (e.target === d) d.close(); });
+});
+
+/* init */
+render();
+</script>
+</body>
+</html>

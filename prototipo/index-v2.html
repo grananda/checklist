@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CheckList — Pantalla principal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            surface: '#FFFFFF',
+            bg: '#F7F8FA',
+            primary: '#0B5CAD',
+            'primary-hover': '#094C91',
+            success: '#1F8A4C',
+            danger: '#B42318',
+            warning: '#9A5B00',
+            ink: '#1A1D21',
+            'ink-muted': '#5A626B',
+            border: '#D7DBE0',
+          },
+          borderRadius: { sm: '6px', md: '10px', pill: '999px' },
+          boxShadow: {
+            sm: '0 1px 2px rgba(26,29,33,0.06), 0 1px 1px rgba(26,29,33,0.04)',
+            md: '0 8px 24px rgba(26,29,33,0.12), 0 2px 6px rgba(26,29,33,0.08)',
+          },
+          maxWidth: { container: '720px' },
+          fontFamily: {
+            sans: ['-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    :root { color-scheme: light; }
+    html { font-size: 16px; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; line-height: 1.5; }
+
+    /* Foco visible global: halo >=2px con offset, contraste >=3:1 sobre superficies claras */
+    *:focus-visible {
+      outline: 3px solid #0B5CAD;
+      outline-offset: 2px;
+      border-radius: 6px;
+    }
+    /* Botón peligro: foco en su propio color para contraste sobre el botón */
+    .focus-danger:focus-visible { outline-color: #B42318; }
+
+    .tnum { font-variant-numeric: tabular-nums; }
+
+    /* Skip link: oculto hasta recibir foco */
+    .skip-link {
+      position: absolute;
+      left: 8px;
+      top: -64px;
+      z-index: 60;
+      transition: top 160ms ease;
+    }
+    .skip-link:focus { top: 8px; }
+
+    /* Transiciones del modal: solo opacity/transform */
+    .modal-overlay { transition: opacity 180ms ease; }
+    .modal-panel { transition: opacity 180ms ease, transform 180ms ease; transform-origin: center; }
+    .modal-hidden .modal-overlay { opacity: 0; }
+    .modal-hidden .modal-panel { opacity: 0; transform: translateY(8px) scale(0.98); }
+
+    .progress-fill { transition: width 220ms ease; }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+
+    button, input, label, a { touch-action: manipulation; }
+    .modal-overlay, .modal-scroll { overscroll-behavior: contain; }
+
+    h1, h2, h3 { text-wrap: balance; }
+  </style>
+</head>
+<body class="bg-bg text-ink antialiased">
+
+  <a href="#contenido" class="skip-link bg-primary text-white px-4 py-3 rounded-md shadow-md font-semibold">
+    Saltar al contenido principal
+  </a>
+
+  <!-- ===== Cabecera + progreso (sticky) ===== -->
+  <header class="sticky top-0 z-40 bg-surface border-b border-border shadow-sm">
+    <div class="mx-auto max-w-container px-4 pt-4 pb-3">
+      <div class="flex items-center justify-between gap-4">
+        <h1 class="text-2xl font-semibold leading-tight">CheckList</h1>
+        <span class="text-sm text-ink-muted tnum" id="resumen-cabecera" aria-hidden="true"></span>
+      </div>
+
+      <!-- Indicador de progreso -->
+      <div class="mt-3">
+        <div class="flex items-center justify-between mb-1.5">
+          <p class="text-sm font-semibold text-ink-muted">
+            <span id="progreso-texto" class="tnum">2 de 6 hechas</span>
+          </p>
+          <p class="text-sm font-semibold text-primary tnum" id="progreso-pct">33%</p>
+        </div>
+        <div
+          id="progressbar"
+          role="progressbar"
+          aria-label="Progreso de tareas completadas"
+          aria-valuemin="0"
+          aria-valuemax="6"
+          aria-valuenow="2"
+          aria-valuetext="2 de 6 tareas hechas, 33%"
+          class="h-2.5 w-full rounded-pill bg-border overflow-hidden"
+        >
+          <div id="progress-fill" class="progress-fill h-full rounded-pill bg-primary" style="width:33%"></div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== Contenido principal ===== -->
+  <main id="contenido" class="mx-auto max-w-container px-4 pb-32 sm:pb-12 pt-5">
+
+    <!-- Región accesible para anuncios en vivo -->
+    <div id="live-region" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+
+    <h2 class="sr-only">Lista de tareas</h2>
+
+    <!-- Lista de tareas -->
+    <ul id="lista-tareas" class="flex flex-col gap-2.5" aria-label="Tareas del checklist"></ul>
+
+    <!-- Estado vacío -->
+    <div id="estado-vacio" class="hidden text-center py-16 px-6">
+      <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-pill bg-bg border border-border">
+        <svg aria-hidden="true" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#5A626B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+        </svg>
+      </div>
+      <h3 class="text-lg font-semibold mb-1">Aún no hay tareas</h3>
+      <p class="text-ink-muted mb-5 max-w-sm mx-auto">Empieza tu checklist añadiendo la primera tarea.</p>
+      <button type="button" data-accion="abrir-alta"
+        class="inline-flex min-h-[44px] items-center gap-2 rounded-md bg-primary px-5 py-2.5 font-semibold text-white shadow-sm hover:bg-primary-hover">
+        <svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        Añadir tarea
+      </button>
+    </div>
+
+    <!-- Botón añadir (pie de lista en escritorio) -->
+    <div id="añadir-escritorio" class="mt-6 hidden sm:flex">
+      <button type="button" data-accion="abrir-alta"
+        class="inline-flex min-h-[44px] items-center gap-2 rounded-md bg-primary px-5 py-2.5 font-semibold text-white shadow-sm hover:bg-primary-hover">
+        <svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        Añadir tarea
+      </button>
+    </div>
+  </main>
+
+  <!-- ===== Botón añadir fijo abajo (móvil) ===== -->
+  <footer class="sm:hidden fixed inset-x-0 bottom-0 z-40 bg-surface/95 backdrop-blur border-t border-border px-4 py-3" style="padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));">
+    <button type="button" data-accion="abrir-alta"
+      class="flex w-full min-h-[48px] items-center justify-center gap-2 rounded-md bg-primary px-5 py-3 font-semibold text-white shadow-sm hover:bg-primary-hover">
+      <svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      Añadir tarea
+    </button>
+  </footer>
+
+  <!-- ===== Modal alta/edición ===== -->
+  <div id="modal-form" class="modal-hidden fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="modal-form-titulo">
+    <div class="modal-overlay absolute inset-0 bg-ink/40" data-cerrar-modal></div>
+    <div class="modal-scroll absolute inset-0 flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto">
+      <div class="modal-panel relative w-full sm:max-w-md bg-surface rounded-t-md sm:rounded-md shadow-md p-5 sm:p-6">
+        <div class="flex items-start justify-between mb-4">
+          <h2 id="modal-form-titulo" class="text-xl font-semibold">Nueva tarea</h2>
+          <button type="button" data-cerrar-modal aria-label="Cerrar formulario"
+            class="-mr-1 -mt-1 inline-flex h-11 w-11 items-center justify-center rounded-md text-ink-muted hover:bg-bg hover:text-ink">
+            <svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        <form id="form-tarea" novalidate>
+          <div class="mb-4">
+            <label for="campo-titulo" class="block text-sm font-semibold mb-1.5">
+              Título <span class="text-danger" aria-hidden="true">*</span>
+            </label>
+            <input id="campo-titulo" name="titulo" type="text" maxlength="120" required
+              autocomplete="off" spellcheck="true"
+              aria-describedby="error-titulo ayuda-titulo"
+              placeholder="Ej.: Actualizar changelog…"
+              class="w-full min-h-[44px] rounded-md border border-border bg-surface px-3 py-2.5 text-ink placeholder:text-ink-muted hover:border-ink-muted" />
+            <p id="ayuda-titulo" class="mt-1 text-xs text-ink-muted">Obligatorio. Máximo 120 caracteres.</p>
+            <p id="error-titulo" class="mt-1 text-sm font-semibold text-danger hidden" role="alert"></p>
+          </div>
+
+          <div class="mb-5">
+            <label for="campo-desc" class="block text-sm font-semibold mb-1.5">
+              Descripción <span class="font-normal text-ink-muted">(opcional)</span>
+            </label>
+            <textarea id="campo-desc" name="descripcion" rows="3" maxlength="2000"
+              autocomplete="off"
+              placeholder="Detalles, contexto o criterios…"
+              class="w-full rounded-md border border-border bg-surface px-3 py-2.5 text-ink placeholder:text-ink-muted hover:border-ink-muted resize-y"></textarea>
+            <p class="mt-1 text-xs text-ink-muted">Máximo 2000 caracteres.</p>
+          </div>
+
+          <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2.5">
+            <button type="button" data-cerrar-modal
+              class="min-h-[44px] rounded-md border border-border bg-surface px-5 py-2.5 font-semibold text-ink hover:bg-bg">
+              Cancelar
+            </button>
+            <button type="submit"
+              class="min-h-[44px] rounded-md bg-primary px-5 py-2.5 font-semibold text-white shadow-sm hover:bg-primary-hover">
+              Guardar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Modal confirmación de borrado ===== -->
+  <div id="modal-borrar" class="modal-hidden fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="modal-borrar-titulo" aria-describedby="modal-borrar-desc">
+    <div class="modal-overlay absolute inset-0 bg-ink/40" data-cerrar-modal></div>
+    <div class="modal-scroll absolute inset-0 flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto">
+      <div class="modal-panel relative w-full sm:max-w-sm bg-surface rounded-t-md sm:rounded-md shadow-md p-5 sm:p-6">
+        <div class="flex items-start gap-3 mb-4">
+          <span class="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-pill bg-danger/10" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#B42318" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          </span>
+          <div>
+            <h2 id="modal-borrar-titulo" class="text-lg font-semibold">Borrar tarea</h2>
+            <p id="modal-borrar-desc" class="mt-1 text-ink-muted">¿Seguro que quieres borrar <span id="borrar-nombre" class="font-semibold text-ink">esta tarea</span>? Esta acción no se puede deshacer.</p>
+          </div>
+        </div>
+        <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2.5">
+          <button type="button" id="btn-cancelar-borrar" data-cerrar-modal
+            class="min-h-[44px] rounded-md border border-border bg-surface px-5 py-2.5 font-semibold text-ink hover:bg-bg">
+            Cancelar
+          </button>
+          <button type="button" id="btn-confirmar-borrar"
+            class="focus-danger min-h-[44px] rounded-md bg-danger px-5 py-2.5 font-semibold text-white shadow-sm hover:brightness-90">
+            Borrar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Plantilla de item de tarea -->
+  <template id="tpl-item">
+    <li class="grupo-item flex items-start gap-3 rounded-md border border-border bg-surface p-3 shadow-sm">
+      <label class="flex min-h-[44px] min-w-[44px] cursor-pointer items-center justify-center -m-1 p-1">
+        <input type="checkbox" class="chk-estado h-6 w-6 cursor-pointer rounded border-2 border-ink-muted text-success accent-[#1F8A4C]" />
+        <span class="sr-only chk-label"></span>
+      </label>
+      <div class="min-w-0 flex-1 pt-0.5">
+        <p class="titulo-item font-semibold leading-snug break-words"></p>
+        <p class="desc-item mt-0.5 text-sm text-ink-muted leading-snug break-words"></p>
+      </div>
+      <div class="flex shrink-0 items-center gap-1">
+        <button type="button" data-accion="editar" class="inline-flex h-11 w-11 items-center justify-center rounded-md text-ink-muted hover:bg-bg hover:text-primary">
+          <svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
+        </button>
+        <button type="button" data-accion="borrar" class="focus-danger inline-flex h-11 w-11 items-center justify-center rounded-md text-ink-muted hover:bg-bg hover:text-danger">
+          <svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        </button>
+      </div>
+    </li>
+  </template>
+
+  <script>
+  (function () {
+    'use strict';
+
+    // ---------- Estado ----------
+    let seq = 0;
+    let tareas = [
+      { id: ++seq, titulo: 'Crear rama de release', desc: 'Desde main, nombrar release/x.y.z', hecha: true },
+      { id: ++seq, titulo: 'Pasar test suite completa', desc: 'Unit + integración en verde', hecha: true },
+      { id: ++seq, titulo: 'Actualizar changelog', desc: 'Resumen de cambios de la versión', hecha: false },
+      { id: ++seq, titulo: 'Desplegar en preproducción', desc: '', hecha: false },
+      { id: ++seq, titulo: 'Validación funcional con QA', desc: 'Smoke test de los flujos críticos', hecha: false },
+      { id: ++seq, titulo: 'Desplegar en producción', desc: 'Ventana acordada con el equipo', hecha: false },
+    ];
+
+    // ---------- Refs ----------
+    const $ = (s, c) => (c || document).querySelector(s);
+    const lista = $('#lista-tareas');
+    const tpl = $('#tpl-item');
+    const estadoVacio = $('#estado-vacio');
+    const añadirEscritorio = $('#añadir-escritorio');
+    const live = $('#live-region');
+
+    const progresoTexto = $('#progreso-texto');
+    const progresoPct = $('#progreso-pct');
+    const resumenCab = $('#resumen-cabecera');
+    const progressbar = $('#progressbar');
+    const progressFill = $('#progress-fill');
+
+    const modalForm = $('#modal-form');
+    const formTarea = $('#form-tarea');
+    const campoTitulo = $('#campo-titulo');
+    const campoDesc = $('#campo-desc');
+    const errorTitulo = $('#error-titulo');
+    const modalFormTitulo = $('#modal-form-titulo');
+
+    const modalBorrar = $('#modal-borrar');
+    const borrarNombre = $('#borrar-nombre');
+    const btnCancelarBorrar = $('#btn-cancelar-borrar');
+    const btnConfirmarBorrar = $('#btn-confirmar-borrar');
+
+    let modoEdicionId = null;   // id en edición, o null si alta
+    let idABorrar = null;
+    let ultimoFoco = null;      // elemento al que restaurar foco
+
+    // ---------- Render ----------
+    function render() {
+      lista.innerHTML = '';
+      if (tareas.length === 0) {
+        estadoVacio.classList.remove('hidden');
+        añadirEscritorio.classList.add('hidden');
+        añadirEscritorio.classList.remove('sm:flex');
+      } else {
+        estadoVacio.classList.add('hidden');
+        añadirEscritorio.classList.remove('hidden');
+        añadirEscritorio.classList.add('sm:flex');
+        tareas.forEach(renderItem);
+      }
+      actualizarProgreso();
+    }
+
+    function renderItem(t) {
+      const li = tpl.content.firstElementChild.cloneNode(true);
+      li.dataset.id = t.id;
+
+      const chk = $('.chk-estado', li);
+      chk.checked = t.hecha;
+      $('.chk-label', li).textContent = (t.hecha ? 'Hecha: ' : 'Pendiente: ') + t.titulo;
+
+      const titulo = $('.titulo-item', li);
+      titulo.textContent = t.titulo;
+      if (t.hecha) {
+        titulo.classList.add('line-through', 'text-ink-muted');
+      }
+
+      const desc = $('.desc-item', li);
+      if (t.desc) { desc.textContent = t.desc; } else { desc.classList.add('hidden'); }
+
+      $('[data-accion="editar"]', li).setAttribute('aria-label', 'Editar tarea: ' + t.titulo);
+      $('[data-accion="borrar"]', li).setAttribute('aria-label', 'Borrar tarea: ' + t.titulo);
+
+      lista.appendChild(li);
+    }
+
+    function actualizarProgreso() {
+      const total = tareas.length;
+      const hechas = tareas.filter(t => t.hecha).length;
+      const pct = total === 0 ? 0 : Math.round((hechas / total) * 100);
+
+      progresoTexto.textContent = hechas + ' de ' + total + ' hechas';
+      progresoPct.textContent = pct + '%';
+      resumenCab.textContent = hechas + '/' + total;
+      progressFill.style.width = pct + '%';
+
+      progressbar.setAttribute('aria-valuemin', '0');
+      progressbar.setAttribute('aria-valuemax', String(total));
+      progressbar.setAttribute('aria-valuenow', String(hechas));
+      progressbar.setAttribute('aria-valuetext', hechas + ' de ' + total + ' tareas hechas, ' + pct + '%');
+    }
+
+    function anunciar(msg) { live.textContent = msg; }
+
+    // ---------- Gestión de foco / modales ----------
+    const FOCO_SEL = 'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+    function focusables(modal) {
+      return Array.from(modal.querySelectorAll(FOCO_SEL)).filter(el => el.offsetParent !== null);
+    }
+
+    function abrirModal(modal, focoInicial) {
+      ultimoFoco = document.activeElement;
+      modal.classList.remove('hidden');
+      // forzar reflow para activar transición desde estado oculto
+      void modal.offsetWidth;
+      modal.classList.remove('modal-hidden');
+      document.body.style.overflow = 'hidden';
+      requestAnimationFrame(() => { (focoInicial || focusables(modal)[0])?.focus(); });
+      modal.addEventListener('keydown', trapHandler);
+    }
+
+    function cerrarModal(modal) {
+      modal.classList.add('modal-hidden');
+      modal.removeEventListener('keydown', trapHandler);
+      document.body.style.overflow = '';
+      const finalizar = () => {
+        modal.classList.add('hidden');
+        if (ultimoFoco && document.contains(ultimoFoco)) { ultimoFoco.focus(); }
+        ultimoFoco = null;
+        modal.removeEventListener('transitionend', finalizar);
+      };
+      // fallback si reduced-motion anula transición
+      modal.addEventListener('transitionend', finalizar);
+      setTimeout(finalizar, 220);
+    }
+
+    function trapHandler(e) {
+      const modal = e.currentTarget;
+      if (e.key === 'Escape') { e.preventDefault(); cerrarActivo(); return; }
+      if (e.key !== 'Tab') return;
+      const items = focusables(modal);
+      if (items.length === 0) return;
+      const first = items[0], last = items[items.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+
+    function cerrarActivo() {
+      if (!modalForm.classList.contains('hidden')) cerrarModal(modalForm);
+      else if (!modalBorrar.classList.contains('hidden')) cerrarModal(modalBorrar);
+    }
+
+    // ---------- Modal formulario (alta / edición) ----------
+    function limpiarError() {
+      errorTitulo.classList.add('hidden');
+      errorTitulo.textContent = '';
+      campoTitulo.removeAttribute('aria-invalid');
+      campoTitulo.classList.remove('border-danger');
+    }
+
+    function abrirAlta() {
+      modoEdicionId = null;
+      modalFormTitulo.textContent = 'Nueva tarea';
+      formTarea.reset();
+      limpiarError();
+      abrirModal(modalForm, campoTitulo);
+    }
+
+    function abrirEdicion(id) {
+      const t = tareas.find(x => x.id === id);
+      if (!t) return;
+      modoEdicionId = id;
+      modalFormTitulo.textContent = 'Editar tarea';
+      campoTitulo.value = t.titulo;
+      campoDesc.value = t.desc || '';
+      limpiarError();
+      abrirModal(modalForm, campoTitulo);
+    }
+
+    formTarea.addEventListener('submit', function (e) {
+      e.preventDefault();
+      const titulo = campoTitulo.value.trim();
+      if (!titulo) {
+        errorTitulo.textContent = 'El título es obligatorio. Escribe al menos un carácter.';
+        errorTitulo.classList.remove('hidden');
+        campoTitulo.setAttribute('aria-invalid', 'true');
+        campoTitulo.classList.add('border-danger');
+        campoTitulo.focus();
+        return;
+      }
+      const desc = campoDesc.value.trim();
+
+      if (modoEdicionId == null) {
+        tareas.push({ id: ++seq, titulo, desc, hecha: false });
+        anunciar('Tarea añadida: ' + titulo + '.');
+      } else {
+        const t = tareas.find(x => x.id === modoEdicionId);
+        if (t) { t.titulo = titulo; t.desc = desc; }
+        anunciar('Tarea actualizada: ' + titulo + '.');
+      }
+      render();
+      cerrarModal(modalForm);
+    });
+
+    // Limpiar error al escribir
+    campoTitulo.addEventListener('input', function () {
+      if (campoTitulo.value.trim()) limpiarError();
+    });
+
+    // ---------- Modal borrado ----------
+    function abrirBorrado(id) {
+      const t = tareas.find(x => x.id === id);
+      if (!t) return;
+      idABorrar = id;
+      borrarNombre.textContent = '“' + t.titulo + '”';
+      abrirModal(modalBorrar, btnCancelarBorrar); // foco inicial en Cancelar
+    }
+
+    btnConfirmarBorrar.addEventListener('click', function () {
+      const t = tareas.find(x => x.id === idABorrar);
+      const nombre = t ? t.titulo : '';
+      tareas = tareas.filter(x => x.id !== idABorrar);
+      idABorrar = null;
+      render();
+      anunciar('Tarea borrada: ' + nombre + '.');
+      cerrarModal(modalBorrar);
+    });
+
+    // ---------- Delegación de eventos ----------
+    document.addEventListener('click', function (e) {
+      const abrir = e.target.closest('[data-accion="abrir-alta"]');
+      if (abrir) { abrirAlta(); return; }
+
+      const cerrar = e.target.closest('[data-cerrar-modal]');
+      if (cerrar) { cerrarActivo(); return; }
+
+      const editar = e.target.closest('[data-accion="editar"]');
+      if (editar) { abrirEdicion(Number(editar.closest('li').dataset.id)); return; }
+
+      const borrar = e.target.closest('[data-accion="borrar"]');
+      if (borrar) { abrirBorrado(Number(borrar.closest('li').dataset.id)); return; }
+    });
+
+    // Cambio de estado de checkbox
+    lista.addEventListener('change', function (e) {
+      const chk = e.target.closest('.chk-estado');
+      if (!chk) return;
+      const id = Number(chk.closest('li').dataset.id);
+      const t = tareas.find(x => x.id === id);
+      if (!t) return;
+      t.hecha = chk.checked;
+      render();
+      actualizarProgreso();
+      anunciar((t.hecha ? 'Marcada como hecha: ' : 'Marcada como pendiente: ') + t.titulo +
+        '. Progreso: ' + progresoTexto.textContent + ', ' + progresoPct.textContent + '.');
+    });
+
+    render();
+  })();
+  </script>
+</body>
+</html>
