@@ -19,7 +19,7 @@ Responde y documenta en espanol siempre que sea posible. Conserva en ingles nomb
 
 ## Que es AIDD y donde encaja este skill
 
-AIDD (AI Driven Development) es un conjunto de skills de planificacion y arquitectura asistida por IA. Cada skill cubre una fase o paso del proceso de arquitecto IA descrito en `.claude/methodology/native-ai-specs-sdd.md` (referencia de metodologia, solo lectura):
+AIDD (AI Driven Development) es un conjunto de skills de planificacion y arquitectura asistida por IA. Cada skill cubre una fase o paso del proceso de arquitecto IA descrito en `.claude/methodology/native-ai-aidd-sdd.md` (referencia de metodologia, solo lectura):
 
 - Fase 0 — `aidd client-requirements`: brief del cliente (`docs/cliente-requisitos.md`).
 - **Fase 1 — Definicion (AI Architect)**, en tres skills independientes:
