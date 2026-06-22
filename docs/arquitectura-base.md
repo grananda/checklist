@@ -4,7 +4,7 @@
 > Fuentes de verdad: detalle-historias-usuario.md, propuesta-arquitectura-base.md, guia-estilos.md.
 > Insumo principal del roadmap. Pendiente de aprobacion humana.
 
-**Versión:** 1.0 · **Fecha:** 2026-06-22 · **Estado:** 🟡 Pendiente de aprobación
+**Versión:** 1.0 · **Fecha:** 2026-06-22 · **Estado:** 🟢 Aprobado
 
 ---
 

@@ -4,7 +4,7 @@
 > Entrada: docs/cliente-requisitos.md. Salida hacia: docs/mapa-historias-usuario.md.
 > Pendiente de aprobacion humana.
 
-**Versión:** 1.1 · **Fecha:** 2026-06-17 · **Estado:** 🟡 Pendiente de aprobación
+**Versión:** 1.1 · **Fecha:** 2026-06-17 · **Estado:** 🟢 Aprobado
 
 ---
 

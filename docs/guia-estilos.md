@@ -4,7 +4,7 @@
 > Entrada: docs/detalle-historias-usuario.md + referencia visual/marca.
 > Pendiente de aprobacion humana.
 
-**Versión:** 1.0 · **Fecha:** 2026-06-22 · **Estado:** 🟡 Pendiente de aprobación
+**Versión:** 1.0 · **Fecha:** 2026-06-22 · **Estado:** 🟢 Aprobado
 
 > ⚠️ **Identidad visual PROVISIONAL.** No se ha aportado todavía la referencia de marca (el usuario indicó que la facilitará). La paleta, la tipografía y la iconografía de abajo son una base neutra y accesible alineada con la estética "limpia y neutra" pedida (NFR-04) y con un acento **azul corporativo**. Al recibir la referencia, se ajustan los tokens de §4 sin cambiar la estructura del documento.
 

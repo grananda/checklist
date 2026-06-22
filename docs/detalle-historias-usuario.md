@@ -4,7 +4,7 @@
 > Entradas: docs/requisitos.md, docs/mapa-historias-usuario.md. Cierra la Fase 1.
 > Pendiente de aprobación humana.
 
-**Versión:** 1.0 · **Fecha:** 2026-06-22 · **Estado:** 🟡 Pendiente de aprobación
+**Versión:** 1.0 · **Fecha:** 2026-06-22 · **Estado:** 🟢 Aprobado
 
 ---
 

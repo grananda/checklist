@@ -4,7 +4,7 @@
 > Entrada: docs/detalle-historias-usuario.md. Propuesta, no arquitectura definitiva.
 > Pendiente de aprobacion humana.
 
-**Versión:** 1.0 · **Fecha:** 2026-06-22 · **Estado:** 🟡 Pendiente de aprobación
+**Versión:** 1.0 · **Fecha:** 2026-06-22 · **Estado:** 🟢 Aprobado
 
 > Esta es una **propuesta** que fija las decisiones de stack que los requisitos dejaron abiertas (RT-5). Tras su aprobación, `aidd architecture` (2.4) la materializa en la arquitectura definitiva e implementable (árbol de carpetas, módulos, etc.).
 

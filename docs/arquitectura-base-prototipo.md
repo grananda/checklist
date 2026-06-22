@@ -4,7 +4,7 @@
 > Entradas: docs/mapa-historias-usuario.md, docs/detalle-historias-usuario.md.
 > Demo 100% mockeada para validacion con cliente. Pendiente de aprobacion humana.
 
-**Versión:** 1.0 · **Fecha:** 2026-06-22 · **Estado:** 🟡 Pendiente de aprobación
+**Versión:** 1.0 · **Fecha:** 2026-06-22 · **Estado:** 🟢 Aprobado (prototipo validado con cliente)
 
 ---
 
