@@ -1,21 +1,22 @@
-# Native AI Specs — SDD · Getting Started
+# Native AI · AIDD-SDD — Getting Started
 
-**Guía de arranque rápido** para empezar a desarrollar con la metodología *AI-Native Spec-Driven Development* y el skill `native-ai-specs`.
+**Guía de arranque rápido** para desarrollar con la metodología **AIDD-SDD**: los skills `aidd` (planificación, diseño y entrega) sobre el proceso *Spec-Driven Development*, y el skill `native-ai-specs` (ejecución sobre OpenSpec).
 
-> Documento de referencia completo: [native-ai-specs-sdd.md](native-ai-specs-sdd.md). Esta guía es el camino corto para ponerte en marcha en una tarde.
+> Documento de referencia completo: [native-ai-aidd-sdd.md](native-ai-aidd-sdd.md). Esta guía es el camino corto para ponerte en marcha en una tarde.
 
 ---
 
 ## 1. ¿Qué es esto en una frase?
 
-Un flujo de desarrollo donde **la especificación es el motor**: defines requisitos → generas specs por *change* con `native-ai-specs` (sobre OpenSpec) → la IA implementa → un validador firma. El humano aprueba en cada transición y todo queda trazado.
+Un flujo de desarrollo donde **la especificación es el motor**: **defines y diseñas con los skills `aidd`** → generas specs por *change* con `native-ai-specs` (sobre OpenSpec) → la IA implementa → un validador firma. El humano aprueba en cada transición y todo queda trazado.
 
-**Los cuatro roles:**
+**Los cinco roles:**
 
 | Rol | Hace | Comandos clave |
 | --- | --- | --- |
-| **AI Architect** | Requisitos, historias, arquitectura, prototipo | (documentos) `native-ai prototype-ux` |
+| **AI Architect** | Requisitos, historias, arquitectura, prototipo | `aidd requirements`, `aidd user-stories`, `aidd user-story-details`, `aidd prototype-architecture`, `aidd prototype`, `aidd style-guide`, `aidd architecture-proposal`, `aidd architecture` |
 | **AI Lead** | Inicializa, fasea, **abre y valida los specs de todos los changes** | `native-ai init`, `native-ai roadmap`, `native-ai open change` |
+| **AI Delivery Manager** | Plan de recursos y reparto en sprints (capa Delivery, v4) | `aidd project-plan`, `aidd sprint-planning` |
 | **AI Developer** | Implementa, verifica, corrige bugs | `native-ai implement change` |
 | **Outcome Validator** | QA técnico + funcional, archiva | `native-ai close change` |
 
@@ -82,21 +83,31 @@ native-ai close change <slug>  ← Outcome Validator (valida → archiva)
 
 ### Paso 0 — Brief del cliente
 
-Crea `docs/cliente-requisitos.md` con el contexto, stack y restricciones. Es el punto de partida del AI Architect.
+```text
+aidd client-requirements   # docs/cliente-requisitos.md — contexto, stack, restricciones
+```
+
+Punto de partida del AI Architect. Captura el brief y, opcionalmente, crea/actualiza `AGENTS.md`.
 
 ### Paso 1 — Definición (AI Architect)
 
-Genera, en este orden, con los prompts del documento de referencia (§Fase 1):
+Ejecuta, en este orden, los comandos `aidd` (cada uno aplica el prompt de su paso):
 
-- `docs/requisitos.md` — requisitos formales trazables (RF-XX, NFR-XX).
-- `docs/mapa-historias-usuario.md` — historias por fases.
-- `docs/detalle-historias-usuario.md` — criterios de aceptación verificables.
+```text
+aidd requirements          # docs/requisitos.md — requisitos formales trazables (RF-XX, NFR-XX)
+aidd user-stories          # docs/mapa-historias-usuario.md — historias por fases
+aidd user-story-details    # docs/detalle-historias-usuario.md — criterios de aceptación verificables
+```
 
 ### Paso 2 — Diseño (AI Architect)
 
-- `docs/arquitectura-base-prototipo.md` + prototipo mockeado (valídalo con el cliente).
-- `docs/guia-estilos.md` y `docs/propuesta-arquitectura-base.md`.
-- `docs/arquitectura-base.md` — **arquitectura definitiva** (insumo del roadmap).
+```text
+aidd prototype-architecture   # docs/arquitectura-base-prototipo.md
+aidd prototype                # prototipo mockeado (redirige a booster-ux) — valídalo con el cliente
+aidd style-guide              # docs/guia-estilos.md
+aidd architecture-proposal    # docs/propuesta-arquitectura-base.md
+aidd architecture             # docs/arquitectura-base.md (arquitectura definitiva, insumo del roadmap)
+```
 
 ### Paso 3 — Inicialización y Roadmap (AI Lead)
 
@@ -110,6 +121,17 @@ native-ai roadmap
 - `docs/roadmap.md` — fases del desarrollo (granularidad según presupuesto de contexto).
 - `docs/prompts-roadmap-native-ai.md` — el prompt exacto de cada fase.
 - Sección `roadmap` en `openspec/config.yaml`.
+
+### Paso 3.5 — Planificación de entrega (AI Delivery Manager) · opcional
+
+Traduce el diseño y el roadmap a recursos y calendario para un equipo humano (capa Delivery, v4; skills `aidd`, autónomos de OpenSpec):
+
+```text
+aidd project-plan      # docs/planificacion-proyecto.md  (tras aprobar el diseño; no necesita roadmap)
+aidd sprint-planning   # docs/sprint-plan.md             (necesita docs/roadmap.md)
+```
+
+Útil cuando un equipo Scrum va a ejecutar el desarrollo. No sustituye al roadmap: reparte sus changes en sprints respetando dependencias y **sin partir ningún change**.
 
 ### Paso 4 — Foundation (AI Lead)
 
@@ -156,7 +178,7 @@ Repite el Paso 5 para cada fase del roadmap hasta terminar.
 ## 7. Artefactos que vas a ver
 
 ```
-docs/                                # documentos de definición y roadmap
+docs/                                # definición, roadmap y planificación de entrega (planificacion-proyecto.md, sprint-plan.md)
 AGENTS.md                            # ancla de contexto + comandos (auto-generado)
 openspec/
 ├── config.yaml                      # project_context + roadmap
@@ -180,6 +202,8 @@ openspec/
 | `native-ai close change <slug>` | Outcome Validator | Valida y archiva el change |
 | `native-ai prototype-ux [<slug>]` | Architect / Developer | Prototipos UX (booster-ux) |
 | `native-ai uml <slug>` | Cualquiera | Diagramas HTML del change (booster-uml) |
+| `aidd project-plan` | AI Delivery Manager | Plan de recursos `docs/planificacion-proyecto.md` (capa Delivery, v4) |
+| `aidd sprint-planning` | AI Delivery Manager | Reparto en sprints `docs/sprint-plan.md` (capa Delivery, v4) |
 
 ---
 
@@ -197,7 +221,7 @@ openspec/
 
 ## 10. Siguientes pasos
 
-- Lee la metodología completa: [native-ai-specs-sdd.md](native-ai-specs-sdd.md).
+- Lee la metodología completa: [native-ai-aidd-sdd.md](native-ai-aidd-sdd.md).
 - Rellena tu `AGENTS.md` con contexto, stack, roles y documentos clave del proyecto.
 - Empieza por `docs/cliente-requisitos.md` y avanza fase a fase.
 
