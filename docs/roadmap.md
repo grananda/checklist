@@ -117,7 +117,7 @@ Orden de ejecución recomendado: **1 → 2 → 3 → 4 → 5**, estrictamente se
 - **Fase 1** abre muchos ficheros: mantener cada uno mínimo (scaffolding), sin adelantar lógica de negocio de fases posteriores.
 - **Fase 5** es la de mayor riesgo: no mezclar su contexto con el de fases previas; abrirla solo cuando las mutaciones a difundir ya existan y estén probadas.
 - **Fase 4** puede dividirse en dos changes si el drag&drop accesible (HU-07) resulta voluminoso; ver `docs/prompts-roadmap-native-ai.md`.
-- Validación del prototipo con cliente aún pendiente (arquitectura-base §13): si la validación trae cambios funcionales, revisar el roadmap antes de abrir más changes.
+- Prototipo validado por el cliente el 2026-06-24 (arquitectura-base §13): alcance de F1/F2 confirmado, sin gate de validación pendiente.
 
 ## Siguientes pasos
 

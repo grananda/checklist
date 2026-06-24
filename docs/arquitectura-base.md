@@ -248,7 +248,7 @@ Relación: `App` compone `AppShell` → `IndicadorProgreso` + `ListaTareas`(→ 
 - **Drag&drop accesible** (HU-07/NFR-05): la alternativa por teclado debe diseñarse con el componente, no como parche.
 
 **Supuestos:**
-- **El prototipo aún no consta como validado por el cliente**: esta arquitectura asume que los requisitos de Fase 1 se mantienen. Si la validación trae cambios significativos, revisar desde el paso 1.1.
+- **Prototipo validado por el cliente (2026-06-24)**: los requisitos de Fase 1 quedan confirmados; se mantiene el alcance de F1/F2 sin cambios. No hay gate de validación pendiente.
 - Despliegue en una máquina/contenedor en red interna disponible en horario laboral (NFR-10).
 
 **Decisiones pendientes:** ninguna bloqueante. El stack está cerrado (D-26..D-32).
