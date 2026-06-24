@@ -4,27 +4,15 @@
  * llegan en la Fase 3 (UI del MVP).
  */
 import { create } from 'zustand';
-import type { Tarea } from '@checklist/shared';
-
-export interface ProgresoDerivado {
-  hechas: number;
-  total: number;
-  porcentaje: number;
-}
+import { calcularProgreso, type Tarea, type Progreso } from '@checklist/shared';
 
 export interface TareasState {
   tareas: Tarea[];
   /** Progreso derivado del estado de las tareas (no se almacena, se calcula). */
-  progreso: () => ProgresoDerivado;
+  progreso: () => Progreso;
 }
 
 export const useTareasStore = create<TareasState>((_set, get) => ({
   tareas: [],
-  progreso: () => {
-    const { tareas } = get();
-    const total = tareas.length;
-    const hechas = tareas.filter((t) => t.hecha).length;
-    const porcentaje = total === 0 ? 0 : Math.round((hechas / total) * 100);
-    return { hechas, total, porcentaje };
-  },
+  progreso: () => calcularProgreso(get().tareas),
 }));

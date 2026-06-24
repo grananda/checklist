@@ -34,7 +34,7 @@ Endpoints fijados por la arquitectura §9: `GET /api/tareas`, `POST /api/tareas`
 
 ## Risks / Trade-offs
 
-- **Doble validación (forma + semántica)**: riesgo de divergencia entre el JSON Schema y los validadores de `shared`. Mitigación: el schema solo cubre forma (tipos, requeridos, longitudes máximas como salvaguarda); la regla de negocio canónica vive en `shared` y se prueba en el servicio.
+- **Doble validación (forma + semántica)**: riesgo de divergencia entre el JSON Schema y los validadores de `shared`. Mitigación: el schema cubre **solo forma** (tipos, campos requeridos, `additionalProperties:false`, `minProperties`); las **longitudes** (NFR-12, configurables por entorno) NO se duplican en el schema y se validan únicamente en el servicio con los validadores de `shared`, que son la regla canónica. El `bodyLimit` (256 KB) acota el tamaño bruto del payload antes de llegar al servicio.
 - **PATCH con `""` para vaciar**: si el cliente envía `descripcion: ""` sin querer, vacía el campo. Aceptado: es el contrato explícito; la UI (Fase 3) controla el envío.
 - **`MAX_TAREAS` como salvaguarda**: rechazo en creación cuando se alcanza el tope (HU-02); no es un límite de negocio "duro" más allá de NFR-12.
 - **Sin difusión todavía**: dos clientes no se ven en vivo hasta la Fase 5; en esta fase la coherencia se garantiza solo al recargar (`GET`). Esperado por el faseado.

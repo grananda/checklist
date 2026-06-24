@@ -7,7 +7,7 @@ describe('GET /health', () => {
   let app: FastifyInstance;
 
   beforeAll(async () => {
-    const config = cargarConfig({ NODE_ENV: 'test' });
+    const config = cargarConfig({ NODE_ENV: 'test', DATABASE_URL: ':memory:' });
     app = await buildApp({ config });
     await app.ready();
   });

@@ -11,4 +11,6 @@ export {
 
 export { LIMITES_DEFAULT, type Limites, superaMaxTareas } from './limites.js';
 
+export { calcularProgreso, type Progreso } from './progreso.js';
+
 export { validarTitulo, validarDescripcion, type ResultadoValidacion } from './validacion.js';
