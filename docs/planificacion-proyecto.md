@@ -2,9 +2,9 @@
 
 > Documento de Planificación de entrega (AIDD · Fase 3.5 · paso 3.5.1). Generado por `aidd project-plan`.
 > Fuentes: docs/arquitectura-base.md, docs/mapa-historias-usuario.md, docs/detalle-historias-usuario.md (apoyo: docs/requisitos.md, docs/cliente-requisitos.md).
-> Insumo de `aidd sprint-planning`. **Pendiente de aprobación humana.**
+> Insumo de `aidd sprint-planning`. Aprobado por revisión humana.
 
-**Versión:** 1.0 · **Fecha:** 2026-06-24 · **Estado:** 🟡 Pendiente de aprobación
+**Versión:** 1.0 · **Fecha:** 2026-06-24 · **Estado:** 🟢 Aprobado (2026-06-24)
 
 ---
 
