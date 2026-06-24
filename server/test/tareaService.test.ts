@@ -70,4 +70,32 @@ describe('tareaService', () => {
     expect(ctx.service.listar()).toHaveLength(0);
     expect(() => ctx.service.borrar('inexistente')).toThrowError();
   });
+
+  it('reordena reasignando posiciones', () => {
+    const a = ctx.service.crear({ titulo: 'A' });
+    const b = ctx.service.crear({ titulo: 'B' });
+    const c = ctx.service.crear({ titulo: 'C' });
+    const ordenada = ctx.service.reordenar([c.id, a.id, b.id]);
+    expect(ordenada.map((t) => t.titulo)).toEqual(['C', 'A', 'B']);
+    expect(ordenada.map((t) => t.posicion)).toEqual([0, 1, 2]);
+  });
+
+  it('rechaza un orden con ids incoherentes', () => {
+    const a = ctx.service.crear({ titulo: 'A' });
+    ctx.service.crear({ titulo: 'B' });
+    expect(() => ctx.service.reordenar([a.id])).toThrowError();
+    expect(() => ctx.service.reordenar([a.id, 'fantasma'])).toThrowError();
+  });
+
+  it('reinicia solo si hay >=1 y todas hechas', () => {
+    expect(() => ctx.service.reiniciar()).toThrowError(); // lista vacía
+    const a = ctx.service.crear({ titulo: 'A' });
+    ctx.service.crear({ titulo: 'B' });
+    expect(() => ctx.service.reiniciar()).toThrowError(); // hay pendientes
+    ctx.service.actualizar(a.id, { hecha: true });
+    expect(() => ctx.service.reiniciar()).toThrowError(); // aún una pendiente
+    for (const t of ctx.service.listar()) ctx.service.actualizar(t.id, { hecha: true });
+    ctx.service.reiniciar();
+    expect(ctx.service.listar()).toHaveLength(0);
+  });
 });

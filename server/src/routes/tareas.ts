@@ -34,6 +34,15 @@ const paramsId = {
   properties: { id: { type: 'string', minLength: 1 } },
 } as const;
 
+const bodyOrden = {
+  type: 'object',
+  required: ['orden'],
+  additionalProperties: false,
+  properties: {
+    orden: { type: 'array', items: { type: 'string', minLength: 1 } },
+  },
+} as const;
+
 export async function registrarTareas(app: FastifyInstance, service: TareaService): Promise<void> {
   app.get('/api/tareas', async () => service.listar());
 
@@ -45,6 +54,20 @@ export async function registrarTareas(app: FastifyInstance, service: TareaServic
       return reply.code(201).send(tarea);
     },
   );
+
+  // Rutas estáticas antes que la paramétrica /:id (Fastify ya las prioriza, explícito por claridad).
+  app.patch<{ Body: { orden: string[] } }>(
+    '/api/tareas/orden',
+    { schema: { body: bodyOrden } },
+    async (request) => {
+      return service.reordenar(request.body.orden);
+    },
+  );
+
+  app.post('/api/tareas/reset', async (_request, reply) => {
+    service.reiniciar();
+    return reply.code(204).send();
+  });
 
   app.patch<{
     Params: { id: string };

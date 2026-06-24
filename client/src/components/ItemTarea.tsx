@@ -1,7 +1,9 @@
 /**
- * Item de tarea (HU-03/04/05): checkbox de estado, título, descripción y acciones
- * editar/borrar. Estado "hecha" con tachado además del color (no solo color).
+ * Item de tarea (HU-03/04/05). Presentacional: el estado "hecha" se indica con tachado
+ * además del color. Acepta un slot opcional de controles de reorden (HU-07) y ref/estilo
+ * para integrarse con el sortable de @dnd-kit, sin acoplarse a la librería.
  */
+import type { CSSProperties, ReactNode, Ref } from 'react';
 import type { Tarea } from '@checklist/shared';
 import { IconoEditar, IconoBorrar } from './iconos';
 
@@ -10,12 +12,25 @@ interface Props {
   onToggle: (hecha: boolean) => void;
   onEditar: () => void;
   onBorrar: () => void;
+  /** Controles de reorden (arrastre + mover arriba/abajo); opcional. */
+  controles?: ReactNode;
+  innerRef?: Ref<HTMLLIElement>;
+  style?: CSSProperties;
 }
 
-export function ItemTarea({ tarea, onToggle, onEditar, onBorrar }: Props) {
+export function ItemTarea({
+  tarea,
+  onToggle,
+  onEditar,
+  onBorrar,
+  controles,
+  innerRef,
+  style,
+}: Props) {
   const checkboxId = `tarea-${tarea.id}`;
   return (
-    <li className={`item${tarea.hecha ? ' item--hecha' : ''}`}>
+    <li ref={innerRef} style={style} className={`item${tarea.hecha ? ' item--hecha' : ''}`}>
+      {controles}
       <input
         id={checkboxId}
         className="item__check"

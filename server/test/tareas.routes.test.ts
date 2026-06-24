@@ -94,4 +94,40 @@ describe('rutas /api/tareas', () => {
     const del2 = await app.inject({ method: 'DELETE', url: `/api/tareas/${id}` });
     expect(del2.statusCode).toBe(404);
   });
+
+  async function crear(titulo: string): Promise<string> {
+    const res = await app.inject({ method: 'POST', url: '/api/tareas', payload: { titulo } });
+    return res.json().id as string;
+  }
+
+  it('PATCH /orden reordena (200) y rechaza ids incoherentes (400)', async () => {
+    const a = await crear('A');
+    const b = await crear('B');
+    const ok = await app.inject({
+      method: 'PATCH',
+      url: '/api/tareas/orden',
+      payload: { orden: [b, a] },
+    });
+    expect(ok.statusCode).toBe(200);
+    expect(ok.json().map((t: { titulo: string }) => t.titulo)).toEqual(['B', 'A']);
+
+    const bad = await app.inject({
+      method: 'PATCH',
+      url: '/api/tareas/orden',
+      payload: { orden: [a] },
+    });
+    expect(bad.statusCode).toBe(400);
+  });
+
+  it('POST /reset -> 409 con pendientes, 204 cuando todas hechas', async () => {
+    const a = await crear('A');
+    expect((await app.inject({ method: 'POST', url: '/api/tareas/reset' })).statusCode).toBe(409);
+    await app.inject({ method: 'PATCH', url: `/api/tareas/${a}`, payload: { hecha: true } });
+    expect((await app.inject({ method: 'POST', url: '/api/tareas/reset' })).statusCode).toBe(204);
+    expect((await app.inject({ method: 'GET', url: '/api/tareas' })).json()).toEqual([]);
+  });
+
+  it('POST /reset -> 409 con lista vacía', async () => {
+    expect((await app.inject({ method: 'POST', url: '/api/tareas/reset' })).statusCode).toBe(409);
+  });
 });

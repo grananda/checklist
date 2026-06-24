@@ -1,4 +1,4 @@
-/** Pantalla única del MVP: progreso + lista + alta/edición y confirmación de borrado. */
+/** Pantalla única: progreso + lista (reordenable) + alta/edición, borrado y reinicio. */
 import { useEffect, useState } from 'react';
 import type { Tarea } from '@checklist/shared';
 import { AppShell } from './components/AppShell';
@@ -13,7 +13,8 @@ type ModalState =
   | { tipo: 'cerrado' }
   | { tipo: 'alta' }
   | { tipo: 'edicion'; tarea: Tarea }
-  | { tipo: 'borrado'; tarea: Tarea };
+  | { tipo: 'borrado'; tarea: Tarea }
+  | { tipo: 'reiniciar' };
 
 export function App() {
   const tareas = useTareasStore((s) => s.tareas);
@@ -24,6 +25,8 @@ export function App() {
   const editar = useTareasStore((s) => s.editar);
   const cambiarEstado = useTareasStore((s) => s.cambiarEstado);
   const borrar = useTareasStore((s) => s.borrar);
+  const reordenar = useTareasStore((s) => s.reordenar);
+  const reiniciar = useTareasStore((s) => s.reiniciar);
 
   const [modal, setModal] = useState<ModalState>({ tipo: 'cerrado' });
 
@@ -32,7 +35,8 @@ export function App() {
   }, [cargar]);
 
   const p = progreso();
-  const abrirAlta = () => setModal({ tipo: 'alta' });
+  const puedeReiniciar = p.total >= 1 && p.hechas === p.total;
+  const cerrar = () => setModal({ tipo: 'cerrado' });
 
   return (
     <>
@@ -55,32 +59,37 @@ export function App() {
           onToggle={(id, hecha) => void cambiarEstado(id, hecha)}
           onEditar={(tarea) => setModal({ tipo: 'edicion', tarea })}
           onBorrar={(tarea) => setModal({ tipo: 'borrado', tarea })}
+          onReordenar={(orden) => void reordenar(orden)}
         />
 
-        <div className="add-escritorio">
-          <button type="button" className="btn btn--primario" onClick={abrirAlta}>
+        <div className="acciones-lista">
+          <button
+            type="button"
+            className="btn btn--primario"
+            onClick={() => setModal({ tipo: 'alta' })}
+          >
             <IconoMas />
             Añadir tarea
+          </button>
+          <button
+            type="button"
+            className="btn btn--secundario"
+            onClick={() => setModal({ tipo: 'reiniciar' })}
+            disabled={!puedeReiniciar}
+            aria-disabled={!puedeReiniciar}
+          >
+            Reiniciar
           </button>
         </div>
       </AppShell>
-
-      <div className="add-movil">
-        <div className="contenedor">
-          <button type="button" className="btn btn--primario btn--bloque" onClick={abrirAlta}>
-            <IconoMas />
-            Añadir tarea
-          </button>
-        </div>
-      </div>
 
       {modal.tipo === 'alta' ? (
         <FormularioTarea
           onGuardar={async (datos) => {
             await crear(datos);
-            setModal({ tipo: 'cerrado' });
+            cerrar();
           }}
-          onCancelar={() => setModal({ tipo: 'cerrado' })}
+          onCancelar={cerrar}
         />
       ) : null}
 
@@ -89,9 +98,9 @@ export function App() {
           inicial={modal.tarea}
           onGuardar={async (datos) => {
             await editar(modal.tarea.id, datos);
-            setModal({ tipo: 'cerrado' });
+            cerrar();
           }}
-          onCancelar={() => setModal({ tipo: 'cerrado' })}
+          onCancelar={cerrar}
         />
       ) : null}
 
@@ -101,9 +110,21 @@ export function App() {
           mensaje={`¿Seguro que quieres borrar "${modal.tarea.titulo}"? Esta acción no se puede deshacer.`}
           onConfirmar={async () => {
             await borrar(modal.tarea.id);
-            setModal({ tipo: 'cerrado' });
+            cerrar();
           }}
-          onCancelar={() => setModal({ tipo: 'cerrado' })}
+          onCancelar={cerrar}
+        />
+      ) : null}
+
+      {modal.tipo === 'reiniciar' ? (
+        <DialogoConfirmacion
+          titulo="Reiniciar la lista"
+          mensaje="Se borrarán todas las tareas para empezar de cero. Esta acción no se puede deshacer."
+          onConfirmar={async () => {
+            await reiniciar();
+            cerrar();
+          }}
+          onCancelar={cerrar}
         />
       ) : null}
     </>

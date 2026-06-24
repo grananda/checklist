@@ -6,7 +6,9 @@ const PORT = 3399;
 // con una base SQLite en memoria. Requiere `pnpm build` previo (lo hace el script test:e2e).
 export default defineConfig({
   testDir: './e2e',
-  fullyParallel: true,
+  // Los tests comparten un único server con BD en memoria con estado → ejecución en serie.
+  fullyParallel: false,
+  workers: 1,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   use: {

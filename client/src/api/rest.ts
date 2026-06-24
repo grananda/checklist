@@ -60,4 +60,19 @@ export const api = {
     const res = await fetch(`${BASE}/${encodeURIComponent(id)}`, { method: 'DELETE' });
     if (!res.ok && res.status !== 204) return parseError(res);
   },
+
+  async reordenar(orden: string[]): Promise<Tarea[]> {
+    const res = await fetch(`${BASE}/orden`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orden }),
+    });
+    if (!res.ok) return parseError(res);
+    return (await res.json()) as Tarea[];
+  },
+
+  async reiniciar(): Promise<void> {
+    const res = await fetch(`${BASE}/reset`, { method: 'POST' });
+    if (!res.ok && res.status !== 204) return parseError(res);
+  },
 };

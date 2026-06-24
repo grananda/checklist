@@ -245,6 +245,39 @@ body {
 .icon-btn--peligro:hover {
   color: var(--color-danger);
 }
+.btn:disabled,
+.icon-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Acciones bajo la lista */
+.acciones-lista {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+}
+
+/* Controles de reorden (columna izquierda del item) */
+.item__reorden {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  margin-top: -2px;
+}
+.item__reorden .icon-btn {
+  width: 28px;
+  height: 28px;
+}
+.item__drag {
+  cursor: grab;
+  touch-action: none;
+}
+.item__drag:active {
+  cursor: grabbing;
+}
 
 /* Botón fijo de añadir en móvil */
 .add-movil {

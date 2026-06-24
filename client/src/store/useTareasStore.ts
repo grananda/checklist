@@ -17,6 +17,8 @@ export interface TareasState {
   cambiarEstado: (id: string, hecha: boolean) => Promise<void>;
   editar: (id: string, patch: ActualizarTareaInput) => Promise<void>;
   borrar: (id: string) => Promise<void>;
+  reordenar: (orden: string[]) => Promise<void>;
+  reiniciar: () => Promise<void>;
 }
 
 export const useTareasStore = create<TareasState>((set, get) => ({
@@ -54,5 +56,23 @@ export const useTareasStore = create<TareasState>((set, get) => ({
   borrar: async (id) => {
     await api.borrar(id);
     set((s) => ({ tareas: s.tareas.filter((t) => t.id !== id) }));
+  },
+
+  reordenar: async (orden) => {
+    // Optimista local para respuesta inmediata del teclado/arrastre; recarga ante error.
+    const previas = get().tareas;
+    const porId = new Map(previas.map((t) => [t.id, t]));
+    set({ tareas: orden.map((id) => porId.get(id)).filter((t): t is Tarea => t !== undefined) });
+    try {
+      const tareas = await api.reordenar(orden);
+      set({ tareas });
+    } catch (e) {
+      set({ tareas: previas, error: (e as Error).message });
+    }
+  },
+
+  reiniciar: async () => {
+    await api.reiniciar();
+    set({ tareas: [] });
   },
 }));

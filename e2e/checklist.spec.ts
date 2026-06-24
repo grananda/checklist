@@ -30,3 +30,30 @@ test('recorrido MVP: añadir, marcar, editar y borrar', async ({ page }) => {
   await page.getByRole('dialog').getByRole('button', { name: 'Borrar' }).click();
   await expect(page.getByText(/no hay tareas/i)).toBeVisible();
 });
+
+test('reordenar por teclado y reiniciar (HU-07, HU-08)', async ({ page }) => {
+  await page.goto('/');
+
+  for (const t of ['Tarea A', 'Tarea B']) {
+    await page.getByRole('button', { name: /añadir tarea/i }).click();
+    await page.getByLabel('Título').fill(t);
+    await page.getByRole('button', { name: 'Añadir', exact: true }).click();
+    await expect(page.getByText(t)).toBeVisible();
+  }
+
+  // HU-07: mover "Tarea A" abajo → el primer item pasa a ser "Tarea B".
+  await page.getByRole('button', { name: 'Mover Tarea A abajo' }).click();
+  await expect(page.locator('.item').first()).toContainText('Tarea B');
+
+  // Completar todo → habilita Reiniciar.
+  const checks = page.getByRole('checkbox');
+  await checks.nth(0).click();
+  await checks.nth(1).click();
+  await expect(checks.nth(0)).toBeChecked();
+  await expect(checks.nth(1)).toBeChecked();
+
+  // HU-08: reiniciar con confirmación → lista vacía.
+  await page.getByRole('button', { name: 'Reiniciar' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Borrar' }).click();
+  await expect(page.getByText(/no hay tareas/i)).toBeVisible();
+});

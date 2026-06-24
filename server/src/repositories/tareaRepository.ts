@@ -35,6 +35,10 @@ export interface TareaRepository {
   borrar(id: string): boolean;
   contar(): number;
   siguientePosicion(): number;
+  /** Reasigna `posicion = índice` a cada id, en una transacción (HU-07). */
+  reasignarPosiciones(ids: string[]): void;
+  /** Borra todas las tareas en una transacción (HU-08). */
+  borrarTodas(): void;
 }
 
 export function createTareaRepository(db: DB): TareaRepository {
@@ -53,6 +57,12 @@ export function createTareaRepository(db: DB): TareaRepository {
   const stmtBorrar = db.prepare('DELETE FROM tareas WHERE id = ?');
   const stmtContar = db.prepare('SELECT COUNT(*) AS n FROM tareas');
   const stmtMaxPos = db.prepare('SELECT MAX(posicion) AS m FROM tareas');
+  const stmtPosicion = db.prepare('UPDATE tareas SET posicion = @posicion WHERE id = @id');
+  const stmtBorrarTodas = db.prepare('DELETE FROM tareas');
+
+  const txReasignar = db.transaction((ids: string[]) => {
+    ids.forEach((id, posicion) => stmtPosicion.run({ id, posicion }));
+  });
 
   return {
     listar: () => (stmtListar.all() as Row[]).map(rowToTarea),
@@ -86,6 +96,12 @@ export function createTareaRepository(db: DB): TareaRepository {
     siguientePosicion: () => {
       const { m } = stmtMaxPos.get() as { m: number | null };
       return (m ?? -1) + 1;
+    },
+    reasignarPosiciones: (ids) => {
+      txReasignar(ids);
+    },
+    borrarTodas: () => {
+      stmtBorrarTodas.run();
     },
   };
 }

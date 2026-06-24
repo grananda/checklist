@@ -30,6 +30,10 @@ export interface TareaService {
   crear(input: CrearTareaInput): Tarea;
   actualizar(id: string, patch: ActualizarTareaInput): Tarea;
   borrar(id: string): void;
+  /** Reordena la lista según los ids dados (HU-07). Devuelve la lista ordenada. */
+  reordenar(orden: string[]): Tarea[];
+  /** Reinicia la lista si hay ≥1 tarea y todas hechas (HU-08, D-15). */
+  reiniciar(): void;
 }
 
 export function createTareaService(repo: TareaRepository, limites: Limites): TareaService {
@@ -90,6 +94,32 @@ export function createTareaService(repo: TareaRepository, limites: Limites): Tar
 
     borrar(id) {
       if (!repo.borrar(id)) throw new DomainError('Tarea no encontrada.', 404);
+    },
+
+    reordenar(orden) {
+      const existentes = repo.listar();
+      const idsExistentes = new Set(existentes.map((t) => t.id));
+      const idsOrden = new Set(orden);
+      const coincide =
+        orden.length === existentes.length &&
+        idsOrden.size === orden.length &&
+        orden.every((id) => idsExistentes.has(id));
+      if (!coincide) {
+        throw new DomainError('El orden no coincide con las tareas existentes.');
+      }
+      repo.reasignarPosiciones(orden);
+      return repo.listar();
+    },
+
+    reiniciar() {
+      const tareas = repo.listar();
+      if (tareas.length === 0) {
+        throw new DomainError('No hay tareas que reiniciar.', 409);
+      }
+      if (!tareas.every((t) => t.hecha)) {
+        throw new DomainError('Solo se puede reiniciar cuando todas las tareas están hechas.', 409);
+      }
+      repo.borrarTodas();
     },
   };
 }
