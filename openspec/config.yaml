@@ -22,5 +22,39 @@ project_context:
       - docs/arquitectura-base.md
   primary_architecture_doc: docs/arquitectura-base.md
 
+roadmap:
+  generated_at: 2026-06-24
+  context_budget: alto
+  complexity: media
+  docs:
+    roadmap: docs/roadmap.md
+    prompts: docs/prompts-roadmap-native-ai.md
+  phases:
+    - id: 1
+      name: Foundation (base global)
+      objective: Estructura base global ejecutable del monorepo; sin funcionalidad de usuario.
+      context_risk: medio
+      change_hint: foundation
+    - id: 2
+      name: API REST y dominio de tareas
+      objective: Backend del MVP (CRUD y progreso) para HU-01..HU-06.
+      context_risk: bajo
+      change_hint: tareas-api-crud
+    - id: 3
+      name: UI del MVP (checklist)
+      objective: Pantalla unica usable de F1 consumiendo la API; cierra el MVP.
+      context_risk: medio
+      change_hint: ui-mvp-checklist
+    - id: 4
+      name: Reordenacion y reinicio
+      objective: HU-07 (drag&drop accesible) y HU-08 (reset con confirmacion).
+      context_risk: medio
+      change_hint: reordenar-y-reiniciar
+    - id: 5
+      name: Tiempo real
+      objective: HU-09 con Socket.IO, broadcast, reconexion y last-write-wins; cierra F2.
+      context_risk: medio-alto
+      change_hint: tiempo-real
+
 audit:
   retention_days: 365
