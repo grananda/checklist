@@ -1,0 +1,3 @@
+# tareas-api-crud
+
+Backend del MVP (Fase 2): tareaRepository (CRUD con sentencias preparadas y transacciones, orden por posicion), tareaService (titulo obligatorio y limites NFR-12, borrado definitivo, posicion determinista al final), progresoService (progreso coherente con lista vacia, HU-06) y routes/tareas.ts con GET/POST /api/tareas, PATCH /api/tareas/:id (toggle HU-03 y editar HU-04) y DELETE /api/tareas/:id. Validacion de forma en transporte (JSON Schema Fastify) y semantica en servicio (validadores de shared). Tests de servicio y de rutas con inject. Solo backend; sin reordenar, reset ni tiempo real. Basado en docs/detalle-historias-usuario.md HU-01..HU-06 y docs/arquitectura-base.md 5,7,9.
