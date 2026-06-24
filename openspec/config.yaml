@@ -1,0 +1,26 @@
+# OpenSpec — configuracion del proyecto CheckList
+# Generado/actualizado por `native-ai init` (skill native-ai-specs v1.4.0).
+
+project_context:
+  name: CheckList
+  type: nuevo
+  description: >-
+    Aplicacion web interna de una unica checklist compartida (equipo 5-10),
+    minimalista, mobile-first, en espanol, con tiempo real. Desarrollo greenfield
+    con la documentacion de planificacion y diseno generada por el conjunto AIDD.
+  documents:
+    fase_0:
+      - docs/cliente-requisitos.md
+    fase_1:
+      - docs/requisitos.md
+      - docs/mapa-historias-usuario.md
+      - docs/detalle-historias-usuario.md
+    fase_2:
+      - docs/arquitectura-base-prototipo.md
+      - docs/guia-estilos.md
+      - docs/propuesta-arquitectura-base.md
+      - docs/arquitectura-base.md
+  primary_architecture_doc: docs/arquitectura-base.md
+
+audit:
+  retention_days: 365
