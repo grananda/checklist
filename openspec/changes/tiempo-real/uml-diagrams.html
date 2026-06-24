@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Diagramas UML - tiempo-real</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f5f7fa;
+      --panel: #ffffff;
+      --panel-soft: #fbfcfd;
+      --text: #1a2230;
+      --text-soft: #404a5c;
+      --muted: #5b6675;
+      --line: #e1e6ed;
+      --line-strong: #c8d1dc;
+      --accent: #005f73;
+      --accent-soft: #d6eef3;
+      --warn-bg: #fff7e6;
+      --warn-border: #f3c969;
+      --warn-text: #6b4a00;
+      --code-bg: #eef2f6;
+      --shadow: 0 1px 2px rgba(15, 23, 42, .04), 0 1px 3px rgba(15, 23, 42, .06);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f1623;
+        --panel: #161f2f;
+        --panel-soft: #1b2536;
+        --text: #e6ebf4;
+        --text-soft: #c2cad8;
+        --muted: #94a0b3;
+        --line: #28324a;
+        --line-strong: #364260;
+        --accent: #4dd0e1;
+        --accent-soft: #143038;
+        --warn-bg: #3a2e0d;
+        --warn-border: #b58a25;
+        --warn-text: #f6d784;
+        --code-bg: #1f2940;
+        --shadow: 0 1px 2px rgba(0, 0, 0, .35), 0 1px 3px rgba(0, 0, 0, .25);
+      }
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: 260px minmax(0, 1fr);
+      gap: 40px;
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 40px 28px 80px;
+    }
+    @media (max-width: 960px) {
+      .layout { grid-template-columns: 1fr; padding: 24px 18px 56px; gap: 24px; }
+      .toc { position: static !important; max-height: none !important; }
+    }
+    main { min-width: 0; }
+    .doc-header {
+      margin-bottom: 24px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--line);
+    }
+    h1 {
+      font-size: 2rem;
+      line-height: 1.2;
+      margin: 0 0 8px;
+      letter-spacing: -0.01em;
+      color: var(--text);
+    }
+    h2 {
+      font-size: 1.35rem;
+      line-height: 1.3;
+      margin: 0 0 14px;
+      letter-spacing: -0.005em;
+      color: var(--text);
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+    h3 {
+      font-size: 1.08rem;
+      margin: 22px 0 10px;
+      color: var(--text);
+    }
+    h4 {
+      font-size: 0.98rem;
+      margin: 18px 0 8px;
+      color: var(--text-soft);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    h2 .anchor {
+      color: var(--line-strong);
+      text-decoration: none;
+      font-weight: 400;
+      opacity: 0;
+      transition: opacity .15s ease, color .15s ease;
+    }
+    h2:hover .anchor { opacity: 1; }
+    h2 .anchor:hover { color: var(--accent); }
+    p {
+      margin: 0 0 14px;
+      color: var(--text-soft);
+      max-width: 72ch;
+    }
+    li { color: var(--text-soft); }
+    ul, ol { padding-left: 24px; margin: 0 0 16px; }
+    ul li, ol li { margin-bottom: 6px; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    strong { color: var(--text); }
+    code {
+      background: var(--code-bg);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 0.88em;
+    }
+    pre {
+      background: var(--panel-soft);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px 18px;
+      overflow-x: auto;
+      font-family: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 0.88em;
+      line-height: 1.55;
+    }
+    pre code { background: transparent; border: 0; padding: 0; font-size: inherit; }
+    .doc-meta {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .doc-meta code { font-size: 0.88em; }
+    .doc-meta .dot { margin: 0 4px; color: var(--line-strong); }
+    .badge {
+      display: inline-block;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 2px 8px;
+      border-radius: 999px;
+      vertical-align: middle;
+    }
+    .doc-section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 24px 26px;
+      margin: 22px 0;
+      box-shadow: var(--shadow);
+    }
+    .doc-section h2 { margin-top: 0; }
+    .doc-section > h2::before {
+      content: "";
+      display: inline-block;
+      width: 6px;
+      height: 22px;
+      border-radius: 3px;
+      background: var(--accent);
+      transform: translateY(3px);
+      margin-right: 2px;
+    }
+    .section-usecase > h2::before { background: #0a9396; }
+    .section-activity > h2::before { background: #ee9b00; }
+    .section-sequence > h2::before { background: #9b5de5; }
+    .section-state > h2::before { background: #e76f51; }
+    .section-traceability > h2::before { background: #6b8e23; }
+    .callout-assumptions {
+      background: var(--warn-bg);
+      border-color: var(--warn-border);
+    }
+    .callout-assumptions h2,
+    .callout-assumptions p,
+    .callout-assumptions li { color: var(--warn-text); }
+    .callout-assumptions > h2::before { background: var(--warn-border); }
+    .callout-assumptions code { background: rgba(0,0,0,0.06); }
+    .diagram {
+      margin: 18px 0 4px;
+      padding: 18px;
+      background: var(--panel-soft);
+      border: 1px dashed var(--line-strong);
+      border-radius: 10px;
+      overflow-x: auto;
+    }
+    .diagram .mermaid {
+      text-align: center;
+      background: transparent;
+      border: 0;
+      padding: 0;
+      margin: 0;
+    }
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      margin: 14px 0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--panel);
+      font-size: 0.94rem;
+    }
+    th, td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+      color: var(--text-soft);
+    }
+    tbody tr:last-child td { border-bottom: 0; }
+    tbody tr:nth-child(even) td { background: var(--panel-soft); }
+    th {
+      background: var(--panel-soft);
+      color: var(--text);
+      font-weight: 600;
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid var(--line-strong);
+    }
+    .toc {
+      position: sticky;
+      top: 24px;
+      align-self: start;
+      max-height: calc(100vh - 48px);
+      overflow-y: auto;
+      padding: 18px 18px 14px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      font-size: 0.9rem;
+    }
+    .toc-title {
+      margin: 0 0 10px;
+      font-size: 0.74rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .toc ol {
+      list-style: none;
+      counter-reset: toc;
+      padding: 0;
+      margin: 0;
+    }
+    .toc li {
+      counter-increment: toc;
+      margin: 0;
+      border-left: 2px solid transparent;
+    }
+    .toc li a {
+      display: block;
+      padding: 6px 10px 6px 12px;
+      color: var(--text-soft);
+      border-radius: 6px;
+    }
+    .toc li a::before {
+      content: counter(toc) ".";
+      color: var(--muted);
+      margin-right: 8px;
+      font-variant-numeric: tabular-nums;
+    }
+    .toc li a:hover {
+      background: var(--accent-soft);
+      color: var(--accent);
+      text-decoration: none;
+    }
+    @media print {
+      body { background: #fff; }
+      .layout { display: block; padding: 0; }
+      .toc { display: none; }
+      .doc-section { box-shadow: none; break-inside: avoid; }
+      .diagram { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <nav class="toc" aria-label="Indice"><p class="toc-title">En esta pagina</p><ol><li><a href="#supuestos-y-huecos">Supuestos y huecos</a></li><li><a href="#casos-de-uso">Casos de uso</a></li><li><a href="#actividad">Actividad</a></li><li><a href="#secuencia-1-happy-path-propagaci-n-de-un-alta">Secuencia 1 - Happy path: propagación de un alta</a></li><li><a href="#secuencia-2-reconexi-n-y-re-sincronizaci-n">Secuencia 2 - Reconexión y re-sincronización</a></li><li><a href="#secuencia-3-ediciones-simult-neas-last-write-wins">Secuencia 3 - Ediciones simultáneas (last-write-wins)</a></li><li><a href="#estado">Estado</a></li><li><a href="#trazabilidad">Trazabilidad</a></li></ol></nav>
+    <main>
+<header class="doc-header"><h1 id="diagramas-uml-tiempo-real">Diagramas UML - tiempo-real</h1><p class="doc-meta"><span class="badge">Change</span> <code>tiempo-real</code> <span class="dot">&middot;</span> Generado el 2026-06-24</p></header>
+<p>El change <code>tiempo-real</code> (HU-09) propaga en tiempo real toda mutación entre los clientes conectados: el gateway Socket.IO emite el evento tras cada cambio (crear/actualizar/borrar/reordenar/reset) y los clientes lo aplican sin recargar, con reconexión/re-sincronización y last-write-wins. Es una capa transversal sobre las mutaciones ya existentes; cierra F2.</p>
+<section class="doc-section callout-assumptions" id="supuestos-y-huecos">
+<h2><a class="anchor" href="#supuestos-y-huecos" aria-label="Enlace">#</a>Supuestos y huecos</h2>
+<ul>
+<li>Supuesto: dos o más <code>Persona del equipo</code> con la web abierta; una sola instancia de servidor (difusión en memoria).</li>
+<li>Supuesto: la mutación llega por REST (sin socket asociado), así que se difunde a todos (<code>io.emit</code>); aplicar el evento es idempotente.</li>
+<li>Hueco: pub/sub multi-instancia (Redis) NO entra (camino de evolución, arquitectura §12).</li>
+<li>Hueco: durante una desconexión se pierden eventos; el GET de re-sync al reconectar cierra el hueco (no se reproduce historial).</li>
+</ul>
+</section>
+<section class="doc-section section-usecase" id="casos-de-uso">
+<h2><a class="anchor" href="#casos-de-uso" aria-label="Enlace">#</a>Casos de uso</h2>
+<p>Cualquier mutación de una persona se difunde al resto. <code>include</code> marca la persistencia previa y la difusión; la reconexión re-sincroniza.</p>
+<figure class="diagram"><pre class="mermaid">flowchart LR
+  P1[&quot;Actor: Persona A&quot;]
+  P2[&quot;Actor: Persona B&quot;]
+  Srv[&quot;Sistema: Servidor + gateway&quot;]
+
+  UC1[&quot;Mutar (crear/editar/borrar/reordenar/reset)&quot;]
+  UC2[&quot;Recibir cambios en vivo&quot;]
+  UC3[&quot;Reconectar y re-sincronizar&quot;]
+
+  Persist[&quot;Persistir mutacion REST&quot;]
+  Difundir[&quot;Emitir evento a todos&quot;]
+
+  P1 --&gt; UC1
+  P2 --&gt; UC2
+  P2 --&gt; UC3
+  UC1 -. include .-&gt; Persist
+  UC1 -. include .-&gt; Difundir
+  Difundir --&gt; Srv
+  UC3 -. include .-&gt; Srv</pre></figure>
+</section>
+<section class="doc-section section-activity" id="actividad">
+<h2><a class="anchor" href="#actividad" aria-label="Enlace">#</a>Actividad</h2>
+<p>Ciclo de una mutación con difusión, y la rama de reconexión del cliente.</p>
+<figure class="diagram"><pre class="mermaid">flowchart TD
+  A([Persona A muta]) --&gt; B[REST persiste en SQLite]
+  B --&gt; C[Ruta emite evento io.emit]
+  C --&gt; D{Clientes conectados}
+  D --&gt; E[Persona A aplica evento idempotente]
+  D --&gt; F[Persona B aplica evento]
+  F --&gt; G[Recalcular progreso y orden en vivo]
+  H([Persona B pierde conexion]) --&gt; I[socket.io-client reintenta]
+  I --&gt; J{Reconecta}
+  J -- Si --&gt; K[GET /api/tareas re-sincroniza]
+  K --&gt; G</pre></figure>
+</section>
+<section class="doc-section section-sequence" id="secuencia-1-happy-path-propagaci-n-de-un-alta">
+<h2><a class="anchor" href="#secuencia-1-happy-path-propagaci-n-de-un-alta" aria-label="Enlace">#</a>Secuencia 1 - Happy path: propagación de un alta</h2>
+<p>Persona A crea una tarea; Persona B la ve sin recargar. Precondición: ambas con el socket conectado.</p>
+<figure class="diagram"><pre class="mermaid">sequenceDiagram
+  actor A as Persona A
+  participant Ra as REST ruta
+  participant DB as SQLite
+  participant IO as Gateway Socket.IO
+  participant Sb as Store B
+  actor B as Persona B
+  A-&gt;&gt;Ra: POST /api/tareas
+  Ra-&gt;&gt;DB: insertar
+  DB--&gt;&gt;Ra: Tarea
+  Ra-&gt;&gt;IO: emit tarea creada (Tarea)
+  IO--&gt;&gt;Sb: tarea creada
+  Sb-&gt;&gt;Sb: upsert + recalcular progreso
+  Sb--&gt;&gt;B: la tarea aparece en vivo
+  Ra--&gt;&gt;A: 201 Tarea</pre></figure>
+</section>
+<section class="doc-section section-sequence" id="secuencia-2-reconexi-n-y-re-sincronizaci-n">
+<h2><a class="anchor" href="#secuencia-2-reconexi-n-y-re-sincronizaci-n" aria-label="Enlace">#</a>Secuencia 2 - Reconexión y re-sincronización</h2>
+<p>Tras perder la conexión, el cliente vuelve a pedir el estado completo.</p>
+<figure class="diagram"><pre class="mermaid">sequenceDiagram
+  participant Sk as socket.io-client
+  participant St as Store
+  participant Api as api/rest
+  participant Srv as Servidor
+  Note over Sk,Srv: La conexion se cae y el cliente reintenta.
+  Sk-&gt;&gt;Sk: reconexion automatica
+  Sk-&gt;&gt;St: evento connect
+  St-&gt;&gt;Api: GET /api/tareas
+  Api-&gt;&gt;Srv: GET /api/tareas
+  Srv--&gt;&gt;Api: estado vigente
+  Api--&gt;&gt;St: tareas
+  St-&gt;&gt;St: reemplazar estado (re-sync)</pre></figure>
+</section>
+<section class="doc-section section-sequence" id="secuencia-3-ediciones-simult-neas-last-write-wins">
+<h2><a class="anchor" href="#secuencia-3-ediciones-simult-neas-last-write-wins" aria-label="Enlace">#</a>Secuencia 3 - Ediciones simultáneas (last-write-wins)</h2>
+<p>Dos personas editan la misma tarea casi a la vez; gana la última escritura y todos convergen.</p>
+<figure class="diagram"><pre class="mermaid">sequenceDiagram
+  actor A as Persona A
+  actor B as Persona B
+  participant Srv as Servidor
+  participant IO as Gateway
+  A-&gt;&gt;Srv: PATCH tarea X titulo Alfa
+  B-&gt;&gt;Srv: PATCH tarea X titulo Beta
+  Note over Srv: Ultima escritura gana (Beta)
+  Srv-&gt;&gt;IO: emit tarea actualizada (X = Beta)
+  IO--&gt;&gt;A: tarea actualizada (Beta)
+  IO--&gt;&gt;B: tarea actualizada (Beta)
+  Note over A,B: Ambos convergen a Beta sin bloqueo</pre></figure>
+</section>
+<section class="doc-section section-state" id="estado">
+<h2><a class="anchor" href="#estado" aria-label="Enlace">#</a>Estado</h2>
+<p>Estado de la conexión de tiempo real del cliente.</p>
+<figure class="diagram"><pre class="mermaid">stateDiagram-v2
+  [*] --&gt; Conectando
+  Conectando --&gt; Conectado: connect (re-sync GET)
+  Conectado --&gt; Desconectado: se cae la conexion
+  Desconectado --&gt; Conectando: reintento automatico
+  Conectado --&gt; EnVivo: suscrito a eventos
+  EnVivo --&gt; Conectado: (sigue conectado)
+  Conectado --&gt; [*]: cerrar la web</pre></figure>
+</section>
+<section class="doc-section section-traceability" id="trazabilidad">
+<h2><a class="anchor" href="#trazabilidad" aria-label="Enlace">#</a>Trazabilidad</h2>
+<div class="table-wrap"><table><thead><tr><th>Requisito/Escenario</th><th>Diagrama(s) donde aparece</th></tr></thead><tbody><tr><td>Difusion de mutaciones (HU-09, eventos shared/eventos.ts)</td><td>Casos de uso (UC1 include Difundir), Actividad, Secuencia 1</td></tr><tr><td>Alta/borrado/reset/reordenado propagados</td><td>Actividad, Secuencia 1 (alta); contratos en shared/eventos.ts</td></tr><tr><td>Actualizacion en vivo del cliente (&lt;1 s, NFR-06)</td><td>Casos de uso (UC2), Secuencia 1, Actividad (recalcular)</td></tr><tr><td>Reconexion y re-sincronizacion (GET)</td><td>Casos de uso (UC3), Actividad (rama reconexion), Secuencia 2, Estado</td></tr><tr><td>Last-write-wins (NFR-11)</td><td>Secuencia 3</td></tr><tr><td>Estado de la conexion en el cliente</td><td>Estado</td></tr></tbody></table></div>
+</section>
+    </main>
+  </div>
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+    const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    mermaid.initialize({
+      startOnLoad: true,
+      securityLevel: 'strict',
+      theme: dark ? 'dark' : 'default'
+    });
+  </script>
+</body>
+</html>
