@@ -55,3 +55,43 @@
   - b) npm workspaces
 - **Decision**: a) pnpm workspaces
 - **Justificación**: El roadmap ya lo fija explícitamente; no se reabre una decisión ya cerrada en el diseño.
+
+## version-node
+
+- **Fecha**: 2026-06-24
+- **Tipo**: preferencia
+- **Origen**: usuario
+- **Contexto**: pre-flight de `implement change`; afecta a `docker/Dockerfile`, `.github/workflows/ci.yml` y `engines` de los `package.json`.
+- **Pregunta**: ¿Qué versión de Node fijo en el andamiaje?
+- **Opciones evaluadas**:
+  - a) Node 22 LTS
+  - b) Node 20 LTS
+  - c) Node 24
+- **Decision**: a) Node 22 LTS
+- **Justificación**: LTS activa y estable; imagen reproducible compatible con Fastify 5, better-sqlite3, Vite y React 18.
+
+## sistema-modulos-server
+
+- **Fecha**: 2026-06-24
+- **Tipo**: preferencia
+- **Origen**: usuario
+- **Contexto**: pre-flight de `implement change`; afecta a `server/package.json` (`type`), `tsconfig.json` y el estilo de imports de todo el código del server.
+- **Pregunta**: ¿ESM o CommonJS para el código del server?
+- **Opciones evaluadas**:
+  - a) ESM
+  - b) CommonJS
+- **Decision**: a) ESM
+- **Justificación**: Moderno y alineado con Vite/React y Fastify 5; compila con tsc a ESM y se ejecuta con node.
+
+## build-server
+
+- **Fecha**: 2026-06-24
+- **Tipo**: confirmacion
+- **Origen**: auto-default
+- **Contexto**: pre-flight de `implement change`; cómo compilar y ejecutar el server en Docker/CI.
+- **Pregunta**: ¿Cómo se compila el server?
+- **Opciones evaluadas**:
+  - a) tsc → dist + `node dist/index.js` (client con Vite)
+  - b) bundler (tsup/esbuild) o ejecución con tsx
+- **Decision**: a) tsc → dist (Vite para el client)
+- **Justificación**: Opción más simple y reproducible (NFR-08), sin bundler extra para el backend; coherente con el contenedor único.

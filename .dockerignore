@@ -1,0 +1,17 @@
+**/node_modules
+**/dist
+**/build
+**/coverage
+.git
+.github
+docs
+openspec
+*.md
+**/*.db
+**/*.db-*
+data
+.env
+.env.local
+test-results
+playwright-report
+.vite

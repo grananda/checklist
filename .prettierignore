@@ -1,0 +1,13 @@
+node_modules
+dist
+build
+coverage
+pnpm-lock.yaml
+*.md
+
+# Artefactos y contenido ajeno al código del producto
+.claude
+openspec
+prototipo
+docs
+*.html

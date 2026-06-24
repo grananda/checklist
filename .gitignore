@@ -1,0 +1,35 @@
+# Dependencias
+node_modules/
+.pnpm-store/
+
+# Builds
+dist/
+build/
+client/dist/
+server/dist/
+shared/dist/
+
+# Base de datos local y datos
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+data/
+
+# Entorno
+.env
+.env.local
+
+# Logs y temporales
+*.log
+npm-debug.log*
+.DS_Store
+
+# Cobertura y caché de herramientas
+coverage/
+.vite/
+.eslintcache
+
+# Playwright (fases posteriores)
+test-results/
+playwright-report/

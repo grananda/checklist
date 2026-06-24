@@ -1,0 +1,8 @@
+packages:
+  - 'shared'
+  - 'server'
+  - 'client'
+
+# Permite ejecutar el script de instalación (prebuild) del módulo nativo.
+onlyBuiltDependencies:
+  - better-sqlite3
