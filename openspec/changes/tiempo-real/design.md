@@ -37,3 +37,7 @@
 - **Concurrencia (LWW, NFR-11)**: ediciones simultáneas sobre la misma tarea → la última gana; sin bloqueo ni merge, por diseño.
 - **Reconexión**: durante la desconexión se pierden eventos; el `GET` de re-sync al reconectar cierra el hueco (no se reproduce el historial).
 - **Tests de tiempo real**: pueden ser sensibles a timing; se usan esperas por evento (no sleeps fijos) y, en e2e, aserciones web-first.
+- **Carreras evento-vs-estado (limitación asumida, sin versionado)**: al no haber número de secuencia por evento, existen ventanas de divergencia **transitoria** que se auto-corrigen en el siguiente sync/reconexión:
+  - Borrar/Reiniciar en un cliente mientras llega un `tarea:creada`/`tarea:actualizada` en vuelo → `upsertLocal` puede reinsertar una tarea "fantasma" hasta el próximo `GET`.
+  - En la reconexión, la respuesta de `GET` (estado en T0) puede resolver después de aplicar un evento posterior (T1) y revertirlo.
+  Es coherente con la decisión de **last-write-wins sin resolución de conflictos** (NFR-11) y una sola instancia. **Camino de endurecimiento (no implementado):** añadir versión/secuencia por entidad o por evento y descartar eventos/respuestas obsoletos.

@@ -57,3 +57,26 @@ test('reordenar por teclado y reiniciar (HU-07, HU-08)', async ({ page }) => {
   await page.getByRole('dialog').getByRole('button', { name: 'Borrar' }).click();
   await expect(page.getByText(/no hay tareas/i)).toBeVisible();
 });
+
+test('tiempo real entre dos clientes (HU-09)', async ({ browser }) => {
+  const ctxA = await browser.newContext();
+  const ctxB = await browser.newContext();
+  const a = await ctxA.newPage();
+  const b = await ctxB.newPage();
+  await a.goto('/');
+  await b.goto('/');
+
+  // A añade una tarea → B la ve sin recargar.
+  await a.getByRole('button', { name: /añadir tarea/i }).click();
+  await a.getByLabel('Título').fill('Tarea compartida');
+  await a.getByRole('button', { name: 'Añadir', exact: true }).click();
+  await expect(b.getByText('Tarea compartida')).toBeVisible();
+
+  // A la borra (con confirmación) → desaparece también en B.
+  await a.getByRole('button', { name: /borrar tarea compartida/i }).click();
+  await a.getByRole('dialog').getByRole('button', { name: 'Borrar' }).click();
+  await expect(b.getByText(/no hay tareas/i)).toBeVisible();
+
+  await ctxA.close();
+  await ctxB.close();
+});

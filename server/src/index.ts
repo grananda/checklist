@@ -1,17 +1,13 @@
 /**
- * Entrypoint del servidor: carga config, construye la app (que abre la base y cablea
- * dominio y rutas), registra el gateway de tiempo real (andamiaje) y escucha.
+ * Entrypoint del servidor: carga config, construye la app (que abre la base, cablea
+ * dominio/rutas y el gateway de tiempo real) y se pone a escuchar.
  */
 import { cargarConfig } from './config.js';
 import { buildApp } from './app.js';
-import { registrarGateway } from './realtime/gateway.js';
 
 async function main(): Promise<void> {
   const config = cargarConfig();
   const app = await buildApp({ config });
-
-  // Andamiaje del gateway de tiempo real (sin eventos de negocio todavía).
-  registrarGateway(app, config.corsOrigin);
 
   try {
     await app.listen({ port: config.port, host: '0.0.0.0' });

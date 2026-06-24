@@ -1,7 +1,8 @@
 /**
- * Store Zustand de la lista de tareas. El servidor es la fuente de verdad:
- * cada acción llama a la API y aplica la respuesta al estado (sin optimistic ni
- * tiempo real en esta fase). El progreso es estado derivado (`calcularProgreso`).
+ * Store Zustand de la lista de tareas. El servidor es la fuente de verdad: las acciones
+ * llaman a la API y aplican la respuesta. El reordenado es optimista y los aplicadores
+ * `*Local` reflejan los eventos de tiempo real (last-write-wins). El progreso es estado
+ * derivado (`calcularProgreso`).
  */
 import { create } from 'zustand';
 import { calcularProgreso, type Tarea, type Progreso } from '@checklist/shared';
@@ -19,6 +20,11 @@ export interface TareasState {
   borrar: (id: string) => Promise<void>;
   reordenar: (orden: string[]) => Promise<void>;
   reiniciar: () => Promise<void>;
+  // Aplicadores de eventos de tiempo real (sin llamada a API). Last-write-wins.
+  upsertLocal: (tarea: Tarea) => void;
+  quitarLocal: (id: string) => void;
+  reemplazarLocal: (tareas: Tarea[]) => void;
+  vaciarLocal: () => void;
 }
 
 export const useTareasStore = create<TareasState>((set, get) => ({
@@ -40,7 +46,9 @@ export const useTareasStore = create<TareasState>((set, get) => ({
 
   crear: async (input) => {
     const tarea = await api.crear(input);
-    set((s) => ({ tareas: [...s.tareas, tarea] }));
+    // upsert (no append ciego): el broadcast `tarea:creada` puede llegar antes de
+    // que resuelva el POST; deduplicar por id evita una tarea duplicada.
+    get().upsertLocal(tarea);
   },
 
   cambiarEstado: async (id, hecha) => {
@@ -75,4 +83,17 @@ export const useTareasStore = create<TareasState>((set, get) => ({
     await api.reiniciar();
     set({ tareas: [] });
   },
+
+  upsertLocal: (tarea) =>
+    set((s) => {
+      const existe = s.tareas.some((t) => t.id === tarea.id);
+      return {
+        tareas: existe
+          ? s.tareas.map((t) => (t.id === tarea.id ? tarea : t))
+          : [...s.tareas, tarea],
+      };
+    }),
+  quitarLocal: (id) => set((s) => ({ tareas: s.tareas.filter((t) => t.id !== id) })),
+  reemplazarLocal: (tareas) => set({ tareas }),
+  vaciarLocal: () => set({ tareas: [] }),
 }));

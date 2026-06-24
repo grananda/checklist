@@ -1,9 +1,8 @@
 /**
- * Andamiaje del gateway de tiempo real (Socket.IO) sobre el servidor Fastify.
- *
- * ANDAMIAJE (foundation): registra el servidor Socket.IO y gestiona conexión/desconexión.
- * NO emite eventos de negocio (`tarea:*`, `lista:reset`). La difusión real llega en la
- * Fase 5 (`tiempo-real`, HU-09), usando los contratos de `@checklist/shared`.
+ * Gateway de tiempo real (Socket.IO) sobre el servidor Fastify. Registra el servidor
+ * Socket.IO tipado y gestiona conexión/desconexión, y devuelve el `io` para que las
+ * rutas difundan los eventos (`tarea:*`, `lista:reset`) tras cada mutación (HU-09).
+ * Los contratos viven en `@checklist/shared`.
  */
 import type { FastifyInstance } from 'fastify';
 import { Server as SocketIOServer } from 'socket.io';

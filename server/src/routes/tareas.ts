@@ -3,7 +3,15 @@
  * la semántica (título, límites) vive en el servicio. No contiene SQL ni reglas de negocio.
  */
 import type { FastifyInstance } from 'fastify';
+import type { Server as SocketIOServer } from 'socket.io';
+import {
+  EVENTOS,
+  type EventosClienteAServidor,
+  type EventosServidorACliente,
+} from '@checklist/shared';
 import type { TareaService } from '../services/tareaService.js';
+
+type IO = SocketIOServer<EventosClienteAServidor, EventosServidorACliente>;
 
 // El JSON Schema valida solo la FORMA (tipos, campos requeridos). Las longitudes (NFR-12,
 // configurables por entorno) son validación semántica y viven en el servicio.
@@ -43,7 +51,11 @@ const bodyOrden = {
   },
 } as const;
 
-export async function registrarTareas(app: FastifyInstance, service: TareaService): Promise<void> {
+export async function registrarTareas(
+  app: FastifyInstance,
+  service: TareaService,
+  io?: IO,
+): Promise<void> {
   app.get('/api/tareas', async () => service.listar());
 
   app.post<{ Body: { titulo: string; descripcion?: string } }>(
@@ -51,6 +63,7 @@ export async function registrarTareas(app: FastifyInstance, service: TareaServic
     { schema: { body: bodyCrear } },
     async (request, reply) => {
       const tarea = service.crear(request.body);
+      io?.emit(EVENTOS.tareaCreada, tarea);
       return reply.code(201).send(tarea);
     },
   );
@@ -60,12 +73,15 @@ export async function registrarTareas(app: FastifyInstance, service: TareaServic
     '/api/tareas/orden',
     { schema: { body: bodyOrden } },
     async (request) => {
-      return service.reordenar(request.body.orden);
+      const lista = service.reordenar(request.body.orden);
+      io?.emit(EVENTOS.tareaReordenada, lista);
+      return lista;
     },
   );
 
   app.post('/api/tareas/reset', async (_request, reply) => {
     service.reiniciar();
+    io?.emit(EVENTOS.listaReset);
     return reply.code(204).send();
   });
 
@@ -73,7 +89,9 @@ export async function registrarTareas(app: FastifyInstance, service: TareaServic
     Params: { id: string };
     Body: { hecha?: boolean; titulo?: string; descripcion?: string };
   }>('/api/tareas/:id', { schema: { params: paramsId, body: bodyActualizar } }, async (request) => {
-    return service.actualizar(request.params.id, request.body);
+    const tarea = service.actualizar(request.params.id, request.body);
+    io?.emit(EVENTOS.tareaActualizada, tarea);
+    return tarea;
   });
 
   app.delete<{ Params: { id: string } }>(
@@ -81,6 +99,7 @@ export async function registrarTareas(app: FastifyInstance, service: TareaServic
     { schema: { params: paramsId } },
     async (request, reply) => {
       service.borrar(request.params.id);
+      io?.emit(EVENTOS.tareaBorrada, { id: request.params.id });
       return reply.code(204).send();
     },
   );

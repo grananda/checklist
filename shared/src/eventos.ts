@@ -1,8 +1,7 @@
 /**
  * Contratos de los eventos de tiempo real (Socket.IO) entre servidor y clientes.
- *
- * ANDAMIAJE: en el change `foundation` estos contratos se DECLARAN pero NO se emiten.
- * La emisión y suscripción reales llegan en la Fase 5 (`tiempo-real`, HU-09).
+ * El servidor los emite tras cada mutación (`routes/tareas.ts`) y el cliente se suscribe
+ * (`client/src/api/socket.ts`). Fuente única de tipos para emisor y suscriptor.
  */
 import type { Tarea } from './tarea.js';
 

@@ -1,7 +1,8 @@
 /**
  * Construcción de la app Fastify. Exportada para tests con `app.inject()`.
- * Abre la base, cablea repositorio y servicios, registra salud, las rutas /api de tareas
- * y el servido estático del client. La difusión de eventos (Socket.IO) llega en la Fase 5.
+ * Abre la base, cablea repositorio y servicios, registra salud, las rutas /api de tareas,
+ * el gateway de tiempo real (Socket.IO, inyectado en las rutas para difundir) y el servido
+ * estático del client.
  */
 import Fastify, { type FastifyInstance, type FastifyError } from 'fastify';
 import helmet from '@fastify/helmet';
@@ -12,17 +13,25 @@ import { createTareaService } from './services/tareaService.js';
 import { DomainError } from './services/errors.js';
 import { registrarHealth } from './routes/health.js';
 import { registrarTareas } from './routes/tareas.js';
+import { registrarGateway } from './realtime/gateway.js';
 import { registrarStatic } from './static.js';
 
 export interface BuildAppOptions {
   config: Config;
   /** Permite inyectar una base ya abierta (tests). Si no, se abre desde config.databaseUrl. */
   db?: DB;
+  /** Activa el gateway de tiempo real (Socket.IO). Por defecto activo salvo en `test`. */
+  realtime?: boolean;
 }
 
-export async function buildApp({ config, db }: BuildAppOptions): Promise<FastifyInstance> {
+export async function buildApp({
+  config,
+  db,
+  realtime,
+}: BuildAppOptions): Promise<FastifyInstance> {
   const propietariaDeDB = db === undefined;
   const database = db ?? abrirDB(config.databaseUrl);
+  const conRealtime = realtime ?? config.nodeEnv !== 'test';
 
   const app = Fastify({
     logger: config.nodeEnv !== 'test',
@@ -59,8 +68,16 @@ export async function buildApp({ config, db }: BuildAppOptions): Promise<Fastify
   const repo = createTareaRepository(database);
   const tareaService = createTareaService(repo, config.limites);
 
+  // Gateway de tiempo real (Fase 5): difunde las mutaciones. Las rutas emiten vía `io`.
+  const io = conRealtime ? registrarGateway(app, config.corsOrigin) : undefined;
+  if (io) {
+    app.addHook('onClose', () => {
+      io.close();
+    });
+  }
+
   await registrarHealth(app);
-  await registrarTareas(app, tareaService);
+  await registrarTareas(app, tareaService, io);
   await registrarStatic(app);
 
   return app;

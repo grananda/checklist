@@ -7,6 +7,7 @@ import { ListaTareas } from './components/ListaTareas';
 import { FormularioTarea } from './components/FormularioTarea';
 import { DialogoConfirmacion } from './components/DialogoConfirmacion';
 import { IconoMas } from './components/iconos';
+import { conectarSocket } from './api/socket';
 import { useTareasStore } from './store/useTareasStore';
 
 type ModalState =
@@ -31,7 +32,26 @@ export function App() {
   const [modal, setModal] = useState<ModalState>({ tipo: 'cerrado' });
 
   useEffect(() => {
+    // Carga inicial por REST (también sirve si el socket no llega a conectar).
     void cargar();
+    // Tiempo real (HU-09): aplica los eventos del servidor. La primera conexión no recarga
+    // (ya lo hizo `cargar()`); las reconexiones sí re-sincronizan por GET.
+    const s = useTareasStore.getState();
+    let primeraConexion = true;
+    return conectarSocket({
+      onConectar: () => {
+        if (primeraConexion) {
+          primeraConexion = false;
+          return;
+        }
+        void useTareasStore.getState().cargar();
+      },
+      onCreada: s.upsertLocal,
+      onActualizada: s.upsertLocal,
+      onBorrada: (p) => s.quitarLocal(p.id),
+      onReordenada: s.reemplazarLocal,
+      onReset: s.vaciarLocal,
+    });
   }, [cargar]);
 
   const p = progreso();
