@@ -1,9 +1,9 @@
 ---
 name: aidd-sprint-planning
-description: Fase 3.5 (paso 3.5.2) del conjunto AIDD (AI Driven Development), capa de planificacion de entrega (Delivery). Distribuye el trabajo en sprints una vez que existe el roadmap y el plan de recursos, mediante el comando `aidd sprint-planning` (alias `aidd planificacion sprints`). Actua como planificador de delivery (Scrum) que lee `docs/roadmap.md`, `docs/planificacion-proyecto.md` y `docs/detalle-historias-usuario.md` y genera `docs/sprint-plan.md` con parametros de planificacion, unidades de trabajo con estimacion (esfuerzo real con IA frente al bruto humano S/M/L), mapa de dependencias y prerequisitos, distribucion en sprints con objetivo, capacidad y asignacion de perfiles, hitos, y riesgos de planificacion. Dimensiona la duracion del sprint por la carga real y el numero de ciclos por los gates/dependencias, evitando rellenar sprints sin sentido. Respeta el faseado por contexto del roadmap (no parte un change). Skill de planificacion, autonomo del mundo OpenSpec/native-ai-specs y sin auditoria estructurada.
+description: Fase 3.5 (paso 3.5.2) del conjunto AIDD (AI Driven Development), capa de planificacion de entrega (Delivery). Distribuye el trabajo en sprints una vez que existe el roadmap y el plan de recursos, mediante el comando `aidd sprint-planning` (alias `aidd planificacion sprints`). Actua como planificador de delivery (Scrum) que lee `docs/roadmap.md`, `docs/planificacion-proyecto.md` y `docs/detalle-historias-usuario.md` y genera `docs/sprint-plan.md` con parametros de planificacion, unidades de trabajo con estimacion (esfuerzo real con IA frente al bruto humano S/M/L), mapa de dependencias y prerequisitos, distribucion en sprints con objetivo, capacidad y asignacion de perfiles, hitos, y riesgos de planificacion. Dimensiona la duracion del sprint por la carga real y el numero de ciclos por los gates/dependencias, evitando rellenar sprints sin sentido. Respeta el faseado por contexto del roadmap (no parte un change). Como paso final opcional, vuelca el plan a Jira via el MCP de Atlassian (crea sprints en el board del proyecto indicado y las historias asignadas a cada sprint), siempre con confirmacion humana previa. Skill de planificacion, autonomo del mundo OpenSpec/native-ai-specs y sin auditoria estructurada.
 metadata:
   author: NTT DATA Spain GDN-e
-  version: "1.1.0"
+  version: "1.2.0"
 ---
 
 # aidd-sprint-planning (AIDD · Fase 3.5 · paso 3.5.2 · sprints)
@@ -53,6 +53,7 @@ Criterio de salida del paso: existe `docs/sprint-plan.md` con los sprints defini
 - No inventes unidades de trabajo nuevas. Distribuyes las que ya existen en roadmap/detalle.
 - No sobrescribas un `docs/sprint-plan.md` existente sin avisar: leelo, propon los cambios y confirma.
 - Este documento requiere aprobacion humana. Al terminar, deja claro que esta pendiente de revision.
+- **El volcado a Jira es opcional y nunca automatico**: la fuente de verdad es `docs/sprint-plan.md`. Solo crea sprints/historias en Jira si el usuario lo confirma e indica el proyecto/board (ver "4. Volcado opcional a Jira"). Crear issues y sprints en Jira es una accion hacia un sistema externo y dificilmente reversible: confirma antes y no la repitas a ciegas.
 
 ## Flujo del comando `aidd sprint-planning`
 
@@ -137,6 +138,61 @@ Reglas de contenido:
 - Las unidades son completas (change/historia); no se parten entre sprints.
 - La seccion 7 sustituye a la auditoria estructurada e incluye decisiones resueltas por default.
 
+### 4. Volcado opcional a Jira (MCP de Atlassian)
+
+Paso **opcional** y **posterior** a generar `docs/sprint-plan.md`. La fuente de verdad sigue siendo el documento; Jira es un destino. Crea en Jira los **sprints** del plan y las **historias** (unidades de trabajo) asignadas a cada sprint.
+
+**Cuando ofrecerlo.** Al terminar el documento, ofrece volcar el plan a Jira. Ejecuta el volcado solo si el usuario lo confirma. Tambien aplica si el usuario lo pide explicitamente ("crea los sprints en Jira", "vuelcalo a Jira en el proyecto X").
+
+**Prerrequisito — MCP de Atlassian.** Este volcado usa el MCP de Atlassian (Jira). No uses la API REST a mano ni gestiones credenciales desde el skill.
+
+1. Comprueba que hay tools del MCP de Atlassian disponibles (descubrelas con la busqueda de herramientas; los nombres pueden variar entre versiones, p. ej. buscar/crear issue, metadata de tipos de issue del proyecto, proyectos visibles, recursos accesibles). No asumas nombres concretos: localiza las tools por su funcion.
+2. Si **no** hay MCP de Atlassian conectado, **no inventes el volcado**: informa de que falta el MCP, deja `docs/sprint-plan.md` como entregable y explica brevemente que hay que conectar el MCP de Atlassian (Jira) para habilitar este paso. No caigas a llamadas REST manuales.
+
+**Datos que necesitas del usuario (preguntar antes de escribir, agrupado).**
+
+- **Proyecto Jira** destino: clave del proyecto (p. ej. `ABC`). Si el usuario solo da el nombre, resuelvelo a su clave con las tools del MCP y confirma.
+- **Board Scrum** del proyecto: los sprints de Jira **viven en un board Scrum**, no en el proyecto a secas. Localiza el board del proyecto; si hay varios, pide cual. Si el proyecto es Kanban o no tiene board Scrum, **avisa**: no se pueden crear sprints; ofrece crear solo las historias (sin sprint) o detener.
+- **Tipo de issue** para las historias (por defecto `Story`/`Historia`; si el proyecto no lo tiene, usa el equivalente y confirmalo con la metadata del proyecto). Anota tambien el tipo de **sub-tarea** (`Sub-task`/`Subtarea`) porque los changes se crearan despues como sub-tareas de la HU (no aqui).
+- **Cuenta de fechas**: usa la fecha de inicio y la duracion de sprint de los parametros de planificacion (seccion 1) para fechar cada sprint en cadena. Confirma la fecha de inicio antes de crear.
+
+**Mapeo plan -> Jira.**
+
+- Cada **sprint** del documento (seccion 4) -> un sprint en el board, con: nombre (p. ej. `Sprint 1 — <objetivo breve>`), objetivo (el objetivo del sprint) y fechas de inicio/fin derivadas de la duracion. No actives (start) los sprints salvo que el usuario lo pida; crealos en estado futuro.
+- Cada **HU** (historia de usuario de la seccion 2 que cae en ese sprint) -> una **Story**, con: titulo (id HU + descripcion breve), descripcion (criterios/notas de `docs/detalle-historias-usuario.md` si estan disponibles), y asignacion al sprint correspondiente. Si el board tiene campo de **estimacion/story points**, vuelca el **esfuerzo real con IA** (no el bruto) cuando sea numerico; si la talla es S/M/L, registrala en la descripcion o en una etiqueta.
+- **Los changes NO se crean aqui.** En este paso solo se crean las **Stories (HU)** y los **sprints**. Cada change se creara mas tarde como **sub-tarea** de su HU cuando el AI Lead ejecute `native-ai open change` (ver skill `native-ai-specs`, "Integracion con Jira"). Lo que SI haces aqui es **preparar el enlace** (ver "Persistencia del enlace y la configuracion").
+- **No crees epicas** en este paso (alcance acordado: sprints + historias/changes-como-subtareas). Si el usuario las pide, mapea fase (F0/F1/F2) -> epica como extension.
+
+**Reglas de seguridad e idempotencia.**
+
+- **Confirma el plan de escritura antes de crear nada**: numero de sprints y de issues, proyecto y board destino. Una linea por sprint con sus issues. Espera el OK.
+- **No dupliques**: antes de crear, comprueba si ya existen sprints con el mismo nombre o issues con el mismo titulo en el proyecto/board (busca con las tools del MCP). Si existen, no los recrees; reporta y ofrece omitir o renombrar. Re-ejecutar el volcado no debe duplicar el plan.
+- Crea de forma ordenada: primero los sprints (para tener sus ids), luego las issues asignandolas a su sprint.
+- Si una creacion falla, **detente y reporta** lo creado hasta el momento (sprints e issues con sus claves), para que el estado sea reconstruible; no sigas a ciegas.
+- No cambies el estado del tablero ni muevas issues existentes; este paso solo **anade** el plan.
+
+**Persistencia del enlace y la configuracion.** Para que `native-ai open/implement/close change` puedan crear las sub-tareas y mover los tickets despues, deja preparado el puente:
+
+1. Escribe (o actualiza, sin tocar otras claves) la seccion `jira:` en `openspec/config.yaml` con: `site`, `project_key`, `board_id`, `story_issue_type`, `subtask_issue_type`, `status_in_progress`, `status_done` y `assignee_override` (vacio salvo que el MCP use una cuenta de servicio). Si no existe `openspec/` (proyecto sin OpenSpec), escribe estos mismos datos en una cabecera de `docs/jira-sync.md` y avisa de que la sincronizacion de changes requiere el mundo native-ai-specs.
+2. Inicializa/actualiza el registro `docs/jira-sync.md` (fuente de verdad del mapeo HU <-> change <-> issue), una fila por HU, con la clave de la **Story** recien creada y, si el roadmap ya asocia changes a esa HU, la lista de change(s) previstos con su sub-tarea en blanco y estado `to_do`. Estructura:
+
+   | HU | Story (Jira) | change(s) | Sub-tarea(s) (Jira) | estado |
+   |----|--------------|-----------|---------------------|--------|
+   | HU-03 | ABC-12 | back-auth | (pendiente) | to_do |
+
+3. No crees las sub-tareas de los changes aqui; solo dejas registradas las HU con su Story y los changes previstos. Las sub-tareas las crea `native-ai open change`.
+
+**Salida del volcado.** Tras crear, informa: proyecto y board, sprints creados (nombre + fechas + clave/id), numero de Stories (HU) creadas por sprint y sus claves (p. ej. `ABC-123`), ruta de `docs/jira-sync.md` y de la seccion `jira:` en `openspec/config.yaml`, y cualquier elemento omitido por ya existir. Recuerda que el documento `docs/sprint-plan.md` sigue siendo la fuente de verdad y que el plan esta pendiente de aprobacion humana.
+
+### 5. HU vs change — que se rastrea en Jira
+
+Convencion del enlace entre los dos planos (negocio y ejecucion), que este skill prepara y `native-ai-specs` consume:
+
+- **La HU es la unidad rastreable de entrega** (Story en Jira): es lo que el equipo se compromete a entregar, lo que tiene criterios de aceptacion y lo que el cliente valida. Es estable.
+- **El change es la unidad de ejecucion** del AI Developer (sub-tarea de su HU): es como la IA construye la HU, acotado por el presupuesto de contexto del roadmap. Una HU puede necesitar **varios** changes.
+- **Enlace**: cada change conoce su(s) HU (anotada en `proposal.md` y en `docs/jira-sync.md`); cada HU conoce sus changes (sus sub-tareas). El pegamento operativo es referenciar la clave de la sub-tarea/Story (`ABC-123`) en el PR del change.
+- **Avance**: `implement change` mueve la sub-tarea y su Story a In Progress; `close change` pasa la sub-tarea a Done y la Story a Done **solo cuando todas sus sub-tareas estan Done**. Asi una HU no se marca completada a medias.
+
 ## Verificacion final
 
 Al terminar, informa:
@@ -144,5 +200,7 @@ Al terminar, informa:
 - Comando AIDD ejecutado (`aidd sprint-planning`).
 - Ruta del documento generado o actualizado (`docs/sprint-plan.md`).
 - Numero de sprints, hito del MVP (F1) y principales dependencias/riesgos de planificacion.
+- Si se ejecuto el volcado a Jira: proyecto/board destino, sprints y Stories (HU) creados (con sus claves) y elementos omitidos; rutas del registro `docs/jira-sync.md` y de la seccion `jira:` en `openspec/config.yaml`. Si no se ejecuto, recuerda que es un paso opcional disponible (requiere el MCP de Atlassian).
+- Recordatorio del enlace: los changes se crearan como sub-tareas de su HU al ejecutar `native-ai open change`, y `implement`/`close change` moveran los tickets de columna automaticamente.
 - Recordatorio: pendiente de **aprobacion humana**.
 - Siguiente paso sugerido: ejecutar el desarrollo segun el plan. En la metodologia completa, el AI Lead abre cada change con `native-ai open change` siguiendo el orden de los sprints; el equipo humano usa este plan para su seguimiento Scrum.

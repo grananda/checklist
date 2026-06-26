@@ -1,9 +1,9 @@
 ---
 name: native-ai-specs
-description: Gestiona especificaciones Native AI con OpenSpec mediante comandos `native-ai init`, `native-ai roadmap`, `native-ai open change`, `native-ai implement change`, `native-ai close change`, `native-ai prototype-ux` y `native-ai uml`; coordina documentacion funcional/tecnica/arquitectura, roadmaps, diagramas con booster-uml y prototipos con booster-ux. Los comandos `open change` e `implement change` ejecutan un pre-flight de dudas con el usuario (maximo 7 preguntas) antes de generar los specs y antes de aplicar las instrucciones de OpenSpec, respectivamente. Todos los comandos escriben una entrada de auditoria estructurada en `openspec/audit/` con hashes de input/output, version de prompt, modelo y decisiones humanas, con retencion configurable.
+description: Gestiona especificaciones Native AI con OpenSpec mediante comandos `native-ai init`, `native-ai roadmap`, `native-ai open change`, `native-ai implement change`, `native-ai close change`, `native-ai prototype-ux` y `native-ai uml`; coordina documentacion funcional/tecnica/arquitectura, roadmaps, diagramas con booster-uml y prototipos con booster-ux. Los comandos `open change` e `implement change` ejecutan un pre-flight de dudas con el usuario (maximo 7 preguntas) antes de generar los specs y antes de aplicar las instrucciones de OpenSpec, respectivamente. Todos los comandos escriben una entrada de auditoria estructurada en `openspec/audit/` con hashes de input/output, version de prompt, modelo y decisiones humanas, con retencion configurable. Integracion opcional con Jira (MCP de Atlassian) cuando esta configurada, `open change` crea la sub-tarea del change bajo la Story de su historia de usuario, `implement change` mueve sus tickets a In Progress y los asigna, y `close change` los pasa a Done (la Story padre solo cuando todas sus sub-tareas estan Done); sin configuracion, los comandos funcionan igual y la sincronizacion se omite.
 metadata:
   author: NTT DATA Spain GDN-e
-  version: "1.4.0"
+  version: "1.5.0"
 ---
 
 # native-ai-specs
@@ -246,7 +246,13 @@ Crea un cambio OpenSpec a partir del contexto del usuario, ejecutando una fase p
    ```
 5. Localiza los artefactos generados del cambio: `design.md`, `proposal.md` y ficheros `spec.md`. Alimentalos con las decisiones recogidas en el pre-flight (alcance, dominios, integraciones, modelo de datos, criterios de aceptacion).
 6. Pasa esa documentacion al skill `booster-uml` para generar HTML con diagramas.
-7. Reporta el identificador del cambio, rutas creadas, decisiones del pre-flight grabadas en `openspec/changes/<change>/decisions.md` y ruta del HTML de diagramas si se genero.
+7. **Enlace con Jira (opcional)**: si la integracion con Jira esta activa (ver "Integracion con Jira (opcional)"):
+   - Identifica la(s) **HU** que realiza este change a partir de `docs/roadmap.md`, `docs/mapa-historias-usuario.md` y `docs/jira-sync.md`. Si no es deducible con confianza, preguntalo (cuenta dentro del presupuesto de pre-flight).
+   - Anota la(s) HU en `proposal.md` (p. ej. una linea "Historias: HU-03").
+   - Lee `docs/jira-sync.md`; si la(s) HU ya tienen Story en Jira y el change **no** tiene aun sub-tarea, crea la **sub-tarea** bajo la Story de la HU principal (tipo `subtask_issue_type`), referenciando las HU secundarias en la descripcion. No la dupliques si ya existe.
+   - Registra en `docs/jira-sync.md` la fila/celda con la clave de la sub-tarea y estado `to_do`. No muevas de columna aqui (eso es `implement`/`close`).
+   - Si la HU no tiene Story todavia (aun no se volco el plan), no crees la sub-tarea: anota el change en el registro como pendiente de Story y avisa en el resumen.
+8. Reporta el identificador del cambio, rutas creadas, decisiones del pre-flight grabadas en `openspec/changes/<change>/decisions.md`, ruta del HTML de diagramas si se genero y, si aplico, la sub-tarea de Jira creada y enlazada.
 
 ### Pre-flight de dudas para apertura
 
@@ -309,7 +315,11 @@ Implementa un cambio OpenSpec con una fase previa de pre-flight para resolver du
    ```bash
    openspec instructions apply --change <what-you-want-to-build>
    ```
-7. Resume instrucciones aplicadas, ficheros afectados si OpenSpec los indica, decisiones grabadas en `decisions.md` y cualquier accion manual pendiente.
+7. **Transicion en Jira (opcional)**: si la integracion con Jira esta activa (ver "Integracion con Jira (opcional)"), al arrancar la implementacion:
+   - Localiza en `docs/jira-sync.md` la **sub-tarea** del change y su **Story** padre. Si el change no tiene sub-tarea (p. ej. se abrio sin Jira), creala ahora bajo su Story como en `open change`; si la HU no tiene Story, omite con aviso.
+   - Resuelve el usuario asignado (cuenta del MCP o `assignee_override`) y mueve la **sub-tarea** y su **Story padre** a **In Progress** (descubriendo la transicion, sin hardcodear), asignando ambos al usuario resuelto.
+   - Actualiza el estado en `docs/jira-sync.md` a `in_progress`.
+8. Resume instrucciones aplicadas, ficheros afectados si OpenSpec los indica, decisiones grabadas en `decisions.md`, la transicion de Jira aplicada (claves de sub-tarea y Story, columna destino, asignado) si la hubo, y cualquier accion manual pendiente.
 
 ### Pre-flight de dudas
 
@@ -373,7 +383,11 @@ Archiva un cambio OpenSpec.
    ```bash
    openspec archive <what-you-want-to-build>
    ```
-6. Verifica que el cambio queda archivado y resume el resultado.
+6. **Transicion en Jira (opcional)**: si la integracion con Jira esta activa (ver "Integracion con Jira (opcional)"):
+   - Localiza en `docs/jira-sync.md` la **sub-tarea** del change y su **Story** padre.
+   - Mueve la **sub-tarea** a **Done** (descubriendo la transicion). Actualiza su estado en `docs/jira-sync.md` a `done`.
+   - Consulta via el MCP las sub-tareas de la Story padre. Mueve la **Story a Done solo si TODAS sus sub-tareas estan Done**; si queda alguna abierta, deja la Story en In Progress e indica en el resumen que sigue pendiente (que changes faltan).
+7. Verifica que el cambio queda archivado y resume el resultado, incluyendo (si aplico) la sub-tarea pasada a Done y si la Story padre se cerro o sigue pendiente.
 
 ## `native-ai prototype-ux [what-you-want-to-build]`
 
@@ -392,6 +406,73 @@ Genera HTML con diagramas asociados al cambio.
 2. Reune `design.md`, `proposal.md` y todos los ficheros `spec.md` del cambio.
 3. Lanza el skill `booster-uml` con esa documentacion para generar el HTML de diagramas.
 4. Si no existe `booster-uml`, avisa donde debe instalarse y deja indicadas las rutas de entrada que deberia procesar.
+
+## Integracion con Jira (opcional)
+
+Enlaza cada change de OpenSpec con su historia de usuario (HU) en Jira y mueve los tickets de columna al implementar y cerrar. Es **opcional** y **no intrusiva**: si no esta configurada, todos los comandos funcionan igual y este bloque se omite por completo.
+
+### Activacion y gating
+
+Este bloque solo actua si se cumplen **las dos** condiciones:
+
+1. Existe una seccion `jira:` en `openspec/config.yaml` (la escribe `aidd sprint-planning` al volcar el plan, o el usuario a mano).
+2. Hay tools del MCP de Atlassian disponibles (localizalas por funcion con la busqueda de herramientas; los nombres varian entre versiones, no los asumas).
+
+Si falta cualquiera de las dos, **omite la sincronizacion sin error**: anota una linea en el resumen del comando ("Jira no configurado o MCP no disponible: sincronizacion omitida") y continua. Nunca caigas a llamadas REST manuales ni gestiones credenciales desde el skill.
+
+### Modelo de datos en Jira (acordado)
+
+- Cada **HU** es una **Story** (la crea `aidd sprint-planning`).
+- Cada **change** es una **sub-tarea** de la Story de su HU.
+- Una HU puede realizarse con varios changes -> varias sub-tareas bajo la misma Story. Si un change realiza varias HU, crea la sub-tarea bajo la HU principal y referencia las demas en la descripcion y en el registro.
+
+### Configuracion (`openspec/config.yaml`, seccion `jira`)
+
+```yaml
+jira:
+  site: <p. ej. miorg.atlassian.net>
+  project_key: <CLAVE>
+  board_id: <id del board Scrum>
+  story_issue_type: Story            # tipo de issue para las HU
+  subtask_issue_type: Sub-task       # tipo de issue para los changes
+  status_in_progress: In Progress    # nombre objetivo de la columna "en curso"
+  status_done: Done                  # nombre objetivo de la columna "terminado"
+  assignee_override: <accountId o vacio>   # usar si el MCP autentica una cuenta de servicio
+```
+
+No inventes valores: si falta una clave necesaria, preguntala una vez y persistela en `config.yaml`.
+
+### Registro de enlace (`docs/jira-sync.md`)
+
+Fuente de verdad del mapeo HU <-> change <-> issue de Jira. Lo inicializa `aidd sprint-planning` (HU -> clave de Story) y lo completan los comandos de change (change -> clave de sub-tarea -> estado). Estructura en tabla:
+
+| HU | Story (Jira) | change(s) | Sub-tarea(s) (Jira) | estado |
+|----|--------------|-----------|---------------------|--------|
+| HU-03 | ABC-12 | back-auth | ABC-45 | in_progress |
+
+Regla de oro: **lee el registro antes de crear o transicionar nada y no dupliques**. Re-ejecutar un comando no debe crear sub-tareas repetidas ni revertir estados de forma incoherente.
+
+### Resolucion del usuario asignado
+
+1. Obten el `accountId` de la cuenta autenticada en el MCP (tool de tipo "current user" / "myself").
+2. Si `jira.assignee_override` tiene valor (porque el MCP usa una cuenta de bot/servicio compartida), asigna a ese `accountId` en su lugar.
+3. Si no se puede resolver ningun `accountId`, mueve de columna pero **no** toques el campo assignee, y avisa en el resumen.
+
+### Descubrimiento de transiciones (no hardcodear)
+
+Los nombres e ids de columna varian por workflow de Jira. Para mover un issue:
+
+1. Consulta via el MCP las **transiciones disponibles** del issue.
+2. Elige la transicion cuyo estado destino case (ignorando mayusculas/acentos) con `status_in_progress` o `status_done`, admitiendo sinonimos comunes (In Progress / En curso / Doing; Done / Completado / Finalizado / Cerrado).
+3. Si ninguna transicion casa, **no fuerces**: avisa en el resumen y deja el issue como esta.
+
+### Que hace cada comando (el detalle vive en cada comando)
+
+- `open change`: crea la **sub-tarea** del change bajo la Story de su(s) HU (si no existe ya) y registra el enlace en `docs/jira-sync.md`.
+- `implement change`: al arrancar la implementacion, mueve la sub-tarea **y su Story padre** a **In Progress** y asigna al usuario resuelto.
+- `close change`: mueve la sub-tarea a **Done**; mueve la Story padre a **Done solo si todas sus sub-tareas estan Done**.
+
+Toda accion de Jira se refleja en el resumen del comando (claves de issue afectadas y transicion aplicada) y se anota en la entrada de auditoria (`output_files`/`notes`). Si una accion de Jira falla, **no bloquees** el resultado funcional del comando OpenSpec: informa el fallo en el resumen y deja el estado reconstruible.
 
 ## Auditoria y trazabilidad
 
